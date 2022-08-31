@@ -1,19 +1,21 @@
-// DRML Snapshot 0.0.11
+// DRML Snapshot 0.0.111
 // Antoine Landrieux 2022
 
 #include <iostream>
 #include <fstream>
-#include <cstring>
 #define MAX_BUFFER 999
 
 #pragma region VAR
+// Strings
 std::string LINE;
 std::string VARIABLE_NAME[MAX_BUFFER];
 std::string VARIABLE_VALUE[MAX_BUFFER];
+// INT
 int LINE_COUNT = 0;
 int BUFFER = 0;
 int VARIABLE_NUMBER = 0;
 int BREAK_POINT = 0;
+// Function
 void readFromFile(char fileName[]);
 void Lexing();
 void Execute(char TOKENS_LINE[]);
@@ -49,13 +51,17 @@ void Lexing()
     exit(EXIT_FAILURE);
   }
   char TOKENS_LINE[BUFFER];
-  strcpy(TOKENS_LINE, LINE.c_str());
+  for (int i=0; i<LINE.length()+1; i++)
+	{
+		TOKENS_LINE[i] = LINE[i];
+	}
   LINE_COUNT++;
   Execute(TOKENS_LINE);
 }
 
 void Execute(char TOKENS_LINE[])
 {
+	bool VALIDATE = false;
   std::string TMP[MAX_BUFFER];
   if (TOKENS_LINE[0] == '$')
   {
@@ -98,7 +104,6 @@ void Execute(char TOKENS_LINE[])
   }
   else if (TOKENS_LINE[0] == '&')
   {
-    bool VALIDATE = false;
     int x = 1;
     std::string VAR[MAX_BUFFER];
     std::string VAR_CONTENT;
