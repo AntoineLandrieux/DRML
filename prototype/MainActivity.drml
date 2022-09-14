@@ -1,5 +1,10 @@
-~ DRML Snapshot 0.0.112
+~ DRML Snapshot 0.1.0
 
-  $nop=non;
-  $yep=oui;
-  &nop=nan;
+$un=222;
+$deux=555;
+&un=111;
+&deux=111;
+
+if $un == $deux exec PROCESS_NAME;
+  out "Hello World";
+end PROCESS_NAME;

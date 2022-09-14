@@ -1,4 +1,4 @@
-// DRML Snapshot 0.0.2
+// DRML Snapshot 0.1.0
 // Antoine Landrieux 2022
 
 #include <iostream>
@@ -8,6 +8,8 @@
 #pragma region VAR
 // Strings
 std::string LINE;
+std::string PROCESS_NAME;
+std::string PROCESS_ACTION = "off";
 std::string VARIABLE_NAME_INT[MAX_BUFFER];
 std::string VARIABLE_NAME_STRING[MAX_BUFFER];
 std::string VARIABLE_VALUE_STRING[MAX_BUFFER];
@@ -74,10 +76,15 @@ void Lexing()
 void Execute(char TOKENS_LINE[])
 {
     bool str = false;
+    bool result = false;
     bool VALIDATE = false;
-    std::string IntTMP;
+    char action = 'n';
+    std::string VAR[MAX_BUFFER];
     std::string TMP[MAX_BUFFER];
-    if (TOKENS_LINE[0] == '$')
+    std::string VAR_CONTENT;
+    std::string IntTMP;
+    VAR_CONTENT = "";
+    if (TOKENS_LINE[0] == '$' && PROCESS_ACTION != "cancel")
     {
         for (int i = 1; i < BUFFER; i++)
         {
@@ -174,12 +181,9 @@ void Execute(char TOKENS_LINE[])
             }
         }
     }
-    else if (TOKENS_LINE[0] == '&')
+    else if (TOKENS_LINE[0] == '&' && PROCESS_ACTION != "cancel")
     {
         int x = 1;
-        std::string VAR[MAX_BUFFER];
-        std::string VAR_CONTENT;
-        VAR_CONTENT = "";
         for (x; x < BUFFER; x++)
         {
             if (TOKENS_LINE[x] != '=')
@@ -201,7 +205,7 @@ void Execute(char TOKENS_LINE[])
             str = true;
             x++;
         }
-        for (x; x < BUFFER; x++)
+        for (x; x < MAX_BUFFER; x++)
         {
             if (TOKENS_LINE[x] != ';')
             {
@@ -255,6 +259,297 @@ void Execute(char TOKENS_LINE[])
             exit(EXIT_FAILURE);
         }
     }
+    else if (TOKENS_LINE[0] == 'i' && TOKENS_LINE[1] == 'f' && PROCESS_ACTION != "cancel")
+    {
+        int i=4;
+        for (i; i<BUFFER; i++)
+        {
+            if (TOKENS_LINE[3] == '$')
+            {
+                if ((TOKENS_LINE[i] == '\t') || (TOKENS_LINE[i] == '\0') || (TOKENS_LINE[i] == ';'))
+                {
+                    exit(EXIT_FAILURE);
+                }
+                if (TOKENS_LINE[i] == ' ')
+                {
+                    break;
+                }
+                VAR[LINE_COUNT] += TOKENS_LINE[i];
+            } else {
+                exit(EXIT_FAILURE);
+            }
+        }
+        int v=0;
+        for (v; v<MAX_BUFFER; v++)
+        {
+            if (VARIABLE_NAME_INT[v] == VAR[LINE_COUNT])
+            {
+                str = false;
+                VALIDATE = true;
+                break;
+            }
+            else if (VARIABLE_NAME_STRING[v] == VAR[LINE_COUNT])
+            {
+                str = true;
+                VALIDATE = true;
+                break;
+            }
+        }
+        if (!VALIDATE)
+        {
+            exit(EXIT_FAILURE);
+        }
+        VALIDATE = false;
+        if (str)
+        {
+            TMP[LINE_COUNT] = VARIABLE_VALUE_STRING[v];
+        }
+        else
+        {
+            TMP[LINE_COUNT] = VARIABLE_VALUE_INT[v];
+        }
+        i++;
+        for (i; i< BUFFER; i++)
+        {
+            if ((TOKENS_LINE[i] == '\t') || (TOKENS_LINE[i] == '\0') || (TOKENS_LINE[i] == ';'))    
+            {
+                exit(EXIT_FAILURE);
+            }
+            if (TOKENS_LINE[i] == ' ')
+            {
+                break;
+            }
+            if ((TOKENS_LINE[i] == '<' && TOKENS_LINE[i+1] == '=') || (TOKENS_LINE[i] == '=' && TOKENS_LINE[i+1] == '<'))
+            {
+                action = '<';
+            }
+            if ((TOKENS_LINE[i] == '>' && TOKENS_LINE[i+1] == '=') || (TOKENS_LINE[i] == '=' && TOKENS_LINE[i+1] == '>'))
+            {
+                action = '>';
+            }
+            if ((TOKENS_LINE[i] == '!' && TOKENS_LINE[i+1] == '=') || (TOKENS_LINE[i] == '=' && TOKENS_LINE[i+1] == '!'))
+            {
+                action = '!';
+            }
+            if (TOKENS_LINE[i] == '=' && TOKENS_LINE[i+1] == '=')
+            {
+                action = '=';
+            }
+        }
+        if (action == 'n')
+        {
+            exit(EXIT_FAILURE);
+        }
+        i++;
+        if (TOKENS_LINE[i] != '$')
+        {
+            exit(EXIT_FAILURE);
+        }
+        LINE_COUNT++;
+        i+=1;
+        for (i; i<BUFFER; i++)
+        {
+            if (TOKENS_LINE[i] != ' ')
+            {
+                if ((TOKENS_LINE[i] == '\t') || (TOKENS_LINE[i] == '\0'))
+                {
+                    exit(EXIT_FAILURE);
+                }
+                TMP[LINE_COUNT] += TOKENS_LINE[i];
+            } else {
+                break;
+            }
+        }
+        i+=2;
+        int bnb=0;
+        for (bnb; bnb < MAX_BUFFER; bnb++)
+        {
+            if (std::string(TMP[LINE_COUNT]) == std::string(VARIABLE_NAME_STRING[bnb]))
+            {
+                VALIDATE = true;
+                break;
+            }
+            if (std::string(TMP[LINE_COUNT]) == std::string(VARIABLE_NAME_INT[bnb]))
+            {
+                VALIDATE = true;
+                break;
+            }
+        }
+        if (VALIDATE == false)
+        {
+            exit(EXIT_FAILURE);
+        }
+        if (str)
+        {
+            TMP[LINE_COUNT] = VARIABLE_VALUE_STRING[i];
+            VALIDATE = true;
+        }
+        else
+        {
+            TMP[LINE_COUNT] = VARIABLE_VALUE_INT[i];
+            VALIDATE = true;
+        }
+        if (!VALIDATE)
+        {
+            exit(EXIT_FAILURE);
+        }
+        VALIDATE = false;
+        if (action == '=')
+        {
+            if ((str == false) && (VARIABLE_VALUE_INT[v] == VARIABLE_VALUE_INT[bnb]))
+            {
+                result = true;
+            }
+            else if ((str == false) && (VARIABLE_VALUE_INT[v] != VARIABLE_VALUE_INT[bnb]))
+            {
+                result = false;
+            }
+            if ((str == true) && (VARIABLE_VALUE_STRING[v] == VARIABLE_VALUE_STRING[bnb]))
+            {
+                result = true;
+            }
+            else if ((str == true) && (VARIABLE_VALUE_STRING[v] != VARIABLE_VALUE_STRING[bnb]))
+            {
+                result = false;
+            }
+        }
+        if (action == '!')
+        {
+            if (str == false && VARIABLE_VALUE_INT[v] != VARIABLE_VALUE_INT[bnb])
+            {
+                result = true;
+            }
+            else if (str == false && VARIABLE_VALUE_INT[v] == VARIABLE_VALUE_INT[bnb])
+            {
+                result = false;
+            }
+            if (str == true && VARIABLE_VALUE_STRING[v] != VARIABLE_VALUE_STRING[bnb])
+            {
+                result = true;
+            }
+            else if (str == true && VARIABLE_VALUE_STRING[v] == VARIABLE_VALUE_STRING[bnb])
+            {
+                result = false;
+            }
+        }
+        if (action == '<')
+        {
+            if (!str && VARIABLE_VALUE_INT[v] <= VARIABLE_VALUE_INT[bnb])
+            {
+                result = true;
+            }
+            else if (!str && VARIABLE_VALUE_INT[v] <= VARIABLE_VALUE_INT[bnb])
+            {
+                result = false;
+            }
+            if (str)
+            {
+                exit(EXIT_FAILURE);
+            }
+        }
+        if (action == '>')
+        {
+            if (!str && VARIABLE_VALUE_INT[v] >= VARIABLE_VALUE_INT[bnb])
+            {
+                result = true;
+            }
+            else if (!str && VARIABLE_VALUE_INT[v] >= VARIABLE_VALUE_INT[bnb])
+            {
+                result = false;
+            }
+            if (str)
+            {
+                exit(EXIT_FAILURE);
+            }
+        }
+        i--;
+        LINE_COUNT--;
+        TMP[LINE_COUNT] = "";
+        if (TOKENS_LINE[i] == 'e' && TOKENS_LINE[i+1] == 'x' && TOKENS_LINE[i+2] == 'e' && TOKENS_LINE[i+3] == 'c')
+        {
+            i += 5;
+            for (i; i<BUFFER; i++)
+            {
+                if (TOKENS_LINE[i] == '\t' || TOKENS_LINE[i] == '\0')
+                {
+                    exit(EXIT_FAILURE);
+                }
+                if (TOKENS_LINE[i] == ';')
+                {
+                    break;
+                }
+                TMP[LINE_COUNT] += TOKENS_LINE[i];
+            }
+            if (result != true)
+            {
+                PROCESS_NAME = TMP[LINE_COUNT];
+                PROCESS_ACTION = "cancel";
+            }
+            else
+            {
+                PROCESS_NAME = TMP[LINE_COUNT];
+            }
+        }
+        else
+        {
+            exit(EXIT_FAILURE);
+        }
+    }
+    else if ((TOKENS_LINE[0] == 'e') && (TOKENS_LINE[1] == 'n') && (TOKENS_LINE[2] == 'd'))
+    {
+        for (int i=4; i<BUFFER; i++)
+        {
+            if (TOKENS_LINE[i] == '\t' || TOKENS_LINE[i] == '\0')
+            {
+                exit(EXIT_FAILURE);
+            }
+            if (TOKENS_LINE[i] == ';')
+            {
+                break;
+            }
+            TMP[LINE_COUNT] += TOKENS_LINE[i];
+        }
+        if (TMP[LINE_COUNT] == PROCESS_NAME)
+        {
+            PROCESS_NAME = "";
+            PROCESS_ACTION = "off";            
+        }
+        else
+        {
+            exit(EXIT_FAILURE);
+        }
+    }
+    else if ((TOKENS_LINE[0] == 'o') && (TOKENS_LINE[1] == 'u') && (TOKENS_LINE[2] == 't') && (PROCESS_ACTION != "cancel"))
+    {
+        int i = 4;
+        if (TOKENS_LINE[i] != '\"')
+        {
+            exit(EXIT_FAILURE);
+        }
+        i++;
+        for (i; i< BUFFER; i++)
+        {
+            if (TOKENS_LINE[i] == '\0' || TOKENS_LINE[i] == ';')
+            {
+                exit(EXIT_FAILURE);
+            }
+            if (TOKENS_LINE[i] == '\"')
+            {
+                if (TOKENS_LINE[i+1] == ';')
+                {
+                    break;
+                }
+                else
+                {
+                    exit(EXIT_FAILURE);
+                }
+            }
+            TMP[LINE_COUNT] += TOKENS_LINE[i];
+        }
+        std::cout << TMP[LINE_COUNT] << std::endl;
+    }
+    else if ((TOKENS_LINE[0] == 'o') && (TOKENS_LINE[1] == 'u') && (TOKENS_LINE[2] == 't') && (PROCESS_ACTION == "cancel"));
+    else if ((TOKENS_LINE[0] == '$' && PROCESS_ACTION == "cancel") || (TOKENS_LINE[0] == '&' && PROCESS_ACTION == "cancel"));
     else if (TOKENS_LINE[0] != '~')
     {
         if (TOKENS_LINE[0] != '\0')
