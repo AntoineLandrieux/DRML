@@ -1,10 +1,15 @@
-~ DRML Snapshot 0.1.0
+~ DRML Snapshot 0.1.5
 
-$un=222;
-$deux=555;
+$un=111;
+$deux=100;
 &un=111;
-&deux=111;
+&deux+11;
 
-if $un == $deux exec PROCESS_NAME;
+if $un == $deux exec;
   out "Hello World";
-end PROCESS_NAME;
+  &un=713705;
+  if $un == $deux exec;
+    exit;
+    out "hidden";
+  end;
+end;

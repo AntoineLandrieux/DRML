@@ -1,4 +1,4 @@
-// DRML Snapshot 0.1.0
+// DRML Snapshot 0.1.5
 // Antoine Landrieux 2022
 
 #include <iostream>
@@ -8,16 +8,16 @@
 #pragma region VAR
 // Strings
 std::string LINE;
-std::string PROCESS_NAME;
-std::string PROCESS_ACTION = "off";
 std::string VARIABLE_NAME_INT[MAX_BUFFER];
 std::string VARIABLE_NAME_STRING[MAX_BUFFER];
 std::string VARIABLE_VALUE_STRING[MAX_BUFFER];
 // INT
 int BUFFER = 0;
 int LINE_COUNT = 0;
+int PROCESS_NUMBER = 0;
 int VARIABLE_NUMBER_INT = 0;
 int VARIABLE_NUMBER_STRING = 0;
+int PROCESS_ACTION[MAX_BUFFER];
 int VARIABLE_VALUE_INT[MAX_BUFFER];
 // Function
 void readFromFile(char fileName[]);
@@ -27,6 +27,10 @@ void Execute(char TOKENS_LINE[]);
 
 int main(int argc, char *argv[])
 {
+    for (int i=0; i<MAX_BUFFER; i++)
+    {
+        PROCESS_ACTION[i] = 0;
+    }
     readFromFile(argv[1]);
     return EXIT_SUCCESS;
 }
@@ -81,10 +85,10 @@ void Execute(char TOKENS_LINE[])
     char action = 'n';
     std::string VAR[MAX_BUFFER];
     std::string TMP[MAX_BUFFER];
-    std::string VAR_CONTENT;
+    std::string VAR_CONTENT="";
     std::string IntTMP;
     VAR_CONTENT = "";
-    if (TOKENS_LINE[0] == '$' && PROCESS_ACTION != "cancel")
+    if (TOKENS_LINE[0] == '$' && PROCESS_ACTION[PROCESS_NUMBER] != 1)
     {
         for (int i = 1; i < BUFFER; i++)
         {
@@ -181,13 +185,18 @@ void Execute(char TOKENS_LINE[])
             }
         }
     }
-    else if (TOKENS_LINE[0] == '&' && PROCESS_ACTION != "cancel")
+    else if (TOKENS_LINE[0] == '&' && PROCESS_ACTION[PROCESS_NUMBER] != 1)
     {
         int x = 1;
         for (x; x < BUFFER; x++)
         {
             if (TOKENS_LINE[x] != '=')
             {
+                if ((TOKENS_LINE[x] == '+'))
+                {
+                    action = '+';
+                    break;
+                }
                 if ((TOKENS_LINE[x] == ' ') || (TOKENS_LINE[x] == '\t') || (TOKENS_LINE[x] == '\0'))
                 {
                     exit(EXIT_FAILURE);
@@ -196,6 +205,7 @@ void Execute(char TOKENS_LINE[])
             }
             else
             {
+                action = '=';
                 break;
             }
         }
@@ -236,18 +246,33 @@ void Execute(char TOKENS_LINE[])
                 VALIDATE = true;
                 if (str)
                 {
-                    VARIABLE_VALUE_STRING[i] = VAR_CONTENT;
+                    if (action == '=')
+                    {
+                        VARIABLE_VALUE_STRING[i] = VAR_CONTENT;
+                    }
+                    else
+                    {
+                        exit(EXIT_FAILURE);
+                    }
                 }
                 else
                 {
                     try
                     {
-                        for (int e=0; i<VAR_CONTENT.length()+1; i++)
+                        if (action == '=')
                         {
                             VARIABLE_VALUE_INT[i] = std::stoi(VAR_CONTENT);
                         }
+                        else if (action == '+')
+                        {
+                            VARIABLE_VALUE_INT[i] += std::stoi(VAR_CONTENT);
+                        }
+                        else
+                        {
+                            VARIABLE_VALUE_INT[i] -= std::stoi(VAR_CONTENT);
+                        }
                     }
-                    catch(const std::exception& e)
+                    catch(const std::exception& f)
                     {
                         exit(EXIT_FAILURE);
                     }
@@ -259,7 +284,7 @@ void Execute(char TOKENS_LINE[])
             exit(EXIT_FAILURE);
         }
     }
-    else if (TOKENS_LINE[0] == 'i' && TOKENS_LINE[1] == 'f' && PROCESS_ACTION != "cancel")
+    else if (TOKENS_LINE[0] == 'i' && TOKENS_LINE[1] == 'f' && PROCESS_ACTION[PROCESS_NUMBER] != 1)
     {
         int i=4;
         for (i; i<BUFFER; i++)
@@ -467,27 +492,10 @@ void Execute(char TOKENS_LINE[])
         TMP[LINE_COUNT] = "";
         if (TOKENS_LINE[i] == 'e' && TOKENS_LINE[i+1] == 'x' && TOKENS_LINE[i+2] == 'e' && TOKENS_LINE[i+3] == 'c')
         {
-            i += 5;
-            for (i; i<BUFFER; i++)
-            {
-                if (TOKENS_LINE[i] == '\t' || TOKENS_LINE[i] == '\0')
-                {
-                    exit(EXIT_FAILURE);
-                }
-                if (TOKENS_LINE[i] == ';')
-                {
-                    break;
-                }
-                TMP[LINE_COUNT] += TOKENS_LINE[i];
-            }
             if (result != true)
             {
-                PROCESS_NAME = TMP[LINE_COUNT];
-                PROCESS_ACTION = "cancel";
-            }
-            else
-            {
-                PROCESS_NAME = TMP[LINE_COUNT];
+                PROCESS_NUMBER++;
+                PROCESS_ACTION[PROCESS_NUMBER] = 1;
             }
         }
         else
@@ -497,29 +505,15 @@ void Execute(char TOKENS_LINE[])
     }
     else if ((TOKENS_LINE[0] == 'e') && (TOKENS_LINE[1] == 'n') && (TOKENS_LINE[2] == 'd'))
     {
-        for (int i=4; i<BUFFER; i++)
+        if (TOKENS_LINE[3] == ';')
         {
-            if (TOKENS_LINE[i] == '\t' || TOKENS_LINE[i] == '\0')
-            {
-                exit(EXIT_FAILURE);
-            }
-            if (TOKENS_LINE[i] == ';')
-            {
-                break;
-            }
-            TMP[LINE_COUNT] += TOKENS_LINE[i];
-        }
-        if (TMP[LINE_COUNT] == PROCESS_NAME)
-        {
-            PROCESS_NAME = "";
-            PROCESS_ACTION = "off";            
-        }
-        else
-        {
+            PROCESS_ACTION[PROCESS_NUMBER] = 0;   
+            PROCESS_NUMBER--;
+        } else {
             exit(EXIT_FAILURE);
         }
     }
-    else if ((TOKENS_LINE[0] == 'o') && (TOKENS_LINE[1] == 'u') && (TOKENS_LINE[2] == 't') && (PROCESS_ACTION != "cancel"))
+    else if ((TOKENS_LINE[0] == 'o') && (TOKENS_LINE[1] == 'u') && (TOKENS_LINE[2] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] != 1))
     {
         int i = 4;
         if (TOKENS_LINE[i] != '\"')
@@ -548,8 +542,20 @@ void Execute(char TOKENS_LINE[])
         }
         std::cout << TMP[LINE_COUNT] << std::endl;
     }
-    else if ((TOKENS_LINE[0] == 'o') && (TOKENS_LINE[1] == 'u') && (TOKENS_LINE[2] == 't') && (PROCESS_ACTION == "cancel"));
-    else if ((TOKENS_LINE[0] == '$' && PROCESS_ACTION == "cancel") || (TOKENS_LINE[0] == '&' && PROCESS_ACTION == "cancel"));
+    else if ((TOKENS_LINE[0] == 'e') && (TOKENS_LINE[1] == 'x') && (TOKENS_LINE[2] == 'i') && (TOKENS_LINE[3] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] != 1))
+    {
+        if (TOKENS_LINE[4] == ';')
+        {
+            exit(EXIT_SUCCESS);
+        }
+        else
+        {
+            exit(EXIT_FAILURE);
+        }
+    }
+    else if ((TOKENS_LINE[0] == 'e') && (TOKENS_LINE[1] == 'x') && (TOKENS_LINE[2] == 'i') && (TOKENS_LINE[3] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] == 1));
+    else if ((TOKENS_LINE[0] == 'o') && (TOKENS_LINE[1] == 'u') && (TOKENS_LINE[2] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] == 1));
+    else if ((TOKENS_LINE[0] == '$' && PROCESS_ACTION[PROCESS_NUMBER] == 1) || (TOKENS_LINE[0] == '&' && PROCESS_ACTION[PROCESS_NUMBER] == 1));
     else if (TOKENS_LINE[0] != '~')
     {
         if (TOKENS_LINE[0] != '\0')
