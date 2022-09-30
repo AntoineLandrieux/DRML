@@ -18,7 +18,7 @@ int PROCESS_NUMBER = 0;
 int VARIABLE_NUMBER_INT = 0;
 int VARIABLE_NUMBER_STRING = 0;
 int PROCESS_ACTION[MAX_BUFFER];
-int VARIABLE_VALUE_INT[MAX_BUFFER];
+float VARIABLE_VALUE_INT[MAX_BUFFER];
 // Function
 void readFromFile(char fileName[]);
 void Lexing();
@@ -83,6 +83,7 @@ void Execute(char TOKENS_LINE[])
     bool result = false;
     bool VALIDATE = false;
     char action = 'n';
+    int final = 0;
     std::string VAR[MAX_BUFFER];
     std::string TMP[MAX_BUFFER];
     std::string VAR_CONTENT="";
@@ -492,10 +493,30 @@ void Execute(char TOKENS_LINE[])
         TMP[LINE_COUNT] = "";
         if (TOKENS_LINE[i] == 'e' && TOKENS_LINE[i+1] == 'x' && TOKENS_LINE[i+2] == 'e' && TOKENS_LINE[i+3] == 'c')
         {
+            i+=4;
             if (result != true)
             {
                 PROCESS_NUMBER++;
                 PROCESS_ACTION[PROCESS_NUMBER] = 1;
+            }
+            for (i; i<BUFFER; i++)
+            {
+                if ((TOKENS_LINE[i]=='\0' && final==1) || TOKENS_LINE[i]=='\t' || (TOKENS_LINE[i]=='\n' && final==1) || TOKENS_LINE[i]=='\r' || TOKENS_LINE[i]==' ')
+                {
+                    continue;
+                }
+                else if (TOKENS_LINE[i]==':' && final==0)
+                {
+                    final=1;
+                }
+                else if (TOKENS_LINE[i]=='~' && final==1)
+                {
+                    break;
+                }
+                else
+                {
+                    exit(EXIT_FAILURE);
+                }
             }
         }
         else
@@ -505,12 +526,27 @@ void Execute(char TOKENS_LINE[])
     }
     else if ((TOKENS_LINE[0] == 'e') && (TOKENS_LINE[1] == 'n') && (TOKENS_LINE[2] == 'd'))
     {
-        if (TOKENS_LINE[3] == ';')
+        int i = 3;
+        for (i; i<BUFFER; i++)
         {
-            PROCESS_ACTION[PROCESS_NUMBER] = 0;   
-            PROCESS_NUMBER--;
-        } else {
-            exit(EXIT_FAILURE);
+            if ((TOKENS_LINE[i]=='\0' && final==1) || TOKENS_LINE[i]=='\t' || (TOKENS_LINE[i]=='\n' && final==1) || TOKENS_LINE[i]=='\r' || TOKENS_LINE[i]==' ')
+            {
+                continue;
+            }
+            else if (TOKENS_LINE[i]=='~' && final==1)
+            {
+                break;
+            }
+            else if (TOKENS_LINE[i] == ';' && final==0)
+            {
+                final=1;
+                PROCESS_ACTION[PROCESS_NUMBER] = 0;   
+                PROCESS_NUMBER--;
+            }
+            else
+            {
+                exit(EXIT_FAILURE);
+            }
         }
     }
     else if ((TOKENS_LINE[0] == 'o') && (TOKENS_LINE[1] == 'u') && (TOKENS_LINE[2] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] != 1))
@@ -523,13 +559,13 @@ void Execute(char TOKENS_LINE[])
         i++;
         for (i; i< BUFFER; i++)
         {
-            if (TOKENS_LINE[i] == '\0' || TOKENS_LINE[i] == ';')
+            if (TOKENS_LINE[i] == '\0')
             {
                 exit(EXIT_FAILURE);
             }
             if (TOKENS_LINE[i] == '\"')
             {
-                if (TOKENS_LINE[i+1] == ';')
+                if (TOKENS_LINE[i+1]==';')
                 {
                     break;
                 }
@@ -544,7 +580,7 @@ void Execute(char TOKENS_LINE[])
     }
     else if ((TOKENS_LINE[0] == 'e') && (TOKENS_LINE[1] == 'x') && (TOKENS_LINE[2] == 'i') && (TOKENS_LINE[3] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] != 1))
     {
-        if (TOKENS_LINE[4] == ';')
+        if (TOKENS_LINE[4]!=';')
         {
             exit(EXIT_SUCCESS);
         }
