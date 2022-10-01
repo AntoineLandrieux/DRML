@@ -1,16 +1,15 @@
-// DRML Snapshot 0.1.5
+// DRML Snapshot 1.0
 // Antoine Landrieux 2022
 
 #include <iostream>
 #include <fstream>
+#include <console.hpp>
+#include <errcode.hpp>
 #define MAX_BUFFER 999
 
 #pragma region VAR
-// Strings
-std::string LINE;
+bool console = false;
 // INT
-int PROCESS_ACTION[MAX_BUFFER];
-int PROCESS_NUMBER = 0;
 int BUFFER = 0;
 int LINE_COUNT = 0;
 // Function
@@ -22,9 +21,10 @@ void Lexing();
 
 int main(int argc, char *argv[])
 {
-    for (int i=0; i<MAX_BUFFER; i++)
+    if (argv[1] == '\0')
     {
-        PROCESS_ACTION[i] = 0;
+        console = true;
+        consoleInit();
     }
     readFromFile(argv[1]);
     return EXIT_SUCCESS;
@@ -32,12 +32,13 @@ int main(int argc, char *argv[])
 
 void readFromFile(char fileName[])
 {
+    std::string LINE;
     std::fstream file(fileName, std::ios::in);
     if (file.is_open())
     {
         while (getline(file, LINE))
         {
-            Lexing();
+            Lexing(LINE);
         }
     }
     else if (!getline(file, LINE))
@@ -46,9 +47,12 @@ void readFromFile(char fileName[])
     }
 }
 
-void Lexing()
+void Lexing(std::string LINE)
 {
-    LINE_COUNT++;
+    if (!console)
+    {
+        LINE_COUNT++;
+    }
     bool CheckSpace = false;
     BUFFER = LINE.length()+1;
     if (BUFFER > MAX_BUFFER)
@@ -69,5 +73,5 @@ void Lexing()
             TOKENS_LINE[a++] = LINE[i];
         }
     }
-    Execute(TOKENS_LINE, BUFFER, LINE_COUNT, PROCESS_ACTION, PROCESS_NUMBER);
+    Execute(TOKENS_LINE, BUFFER, LINE_COUNT, console);
 }

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <errcode.hpp>
 #include <execute.hpp>
 #define MAX_BUFFER 999
 
@@ -8,12 +9,14 @@ std::string VARIABLE_NAME_INT[MAX_BUFFER];
 std::string VARIABLE_NAME_STRING[MAX_BUFFER];
 std::string VARIABLE_VALUE_STRING[MAX_BUFFER];
 // INT
+int PROCESS_ACTION[MAX_BUFFER];
+int PROCESS_NUMBER = 0;
 int VARIABLE_NUMBER_INT = 0;
 int VARIABLE_NUMBER_STRING = 0;
 float VARIABLE_VALUE_INT[MAX_BUFFER];
 #pragma endregion VAR
 
-void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION, int PROCESS_NUMBER)
+int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
 {
     bool str = false;
     bool result = false;
@@ -33,7 +36,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
             {
                 if ((TOKENS_LINE[i] == ' ') || (TOKENS_LINE[i] == '\t') || (TOKENS_LINE[i] == '\0'))
                 {
-                    exit(EXIT_FAILURE);
+                    ErrCode("VAR", "Incorrect structure", LINE_COUNT, console);
+                    return EXIT_FAILURE;
                 }
                 TMP[LINE_COUNT] += TOKENS_LINE[i];
             }
@@ -43,18 +47,16 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
                 {
                     if (TMP[LINE_COUNT] == VARIABLE_NAME_STRING[e])
                     {
-                        exit(EXIT_FAILURE);
+                        ErrCode("VAR", "Existing variable", LINE_COUNT, console);
+                        return EXIT_FAILURE;
                     }
                 }
                 for (int e = 0; e < VARIABLE_NUMBER_INT; e++)
                 {
                     if (TMP[LINE_COUNT] == VARIABLE_NAME_INT[e+1])
                     {
-                        exit(EXIT_FAILURE);
-                    }
-                    if (TMP[LINE_COUNT] == VARIABLE_NAME_STRING[e+1])
-                    {
-                        exit(EXIT_FAILURE);
+                        ErrCode("VAR", "Existing variable", LINE_COUNT, console);
+                        return EXIT_FAILURE;
                     }
                 }
                 i++;
@@ -72,9 +74,10 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
                 {
                     if ((TOKENS_LINE[i] != ';') || (str && TOKENS_LINE[i] != '\"' && TOKENS_LINE[i+1] != ';'))
                     {
-                        if ((TOKENS_LINE[i] == '\0') || (TOKENS_LINE[i] == '~'))
+                        if ((TOKENS_LINE[i] == '\0') || (TOKENS_LINE[i] == '\r'))
                         {
-                            exit(EXIT_FAILURE);
+                            ErrCode("VAR", "Incorrect structure", LINE_COUNT, console);
+                            return EXIT_FAILURE;
                         }
                         if (str && TOKENS_LINE[i]=='\"')
                         {
@@ -82,7 +85,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
                             {
                                 break;
                             } else {
-                                exit(EXIT_FAILURE);
+                                ErrCode("VAR", "';' missing", LINE_COUNT, console);
+                                return EXIT_FAILURE;
                             }
                         }
                         if (str)
@@ -97,7 +101,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
                             }
                             catch (const std::exception& e)
                             {
-                                exit(EXIT_FAILURE);
+                                ErrCode("VAR", "Cannot convert to 'int'", LINE_COUNT, console);
+                                return EXIT_FAILURE;
                             }
                         }
                     }
@@ -115,7 +120,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
                     }
                     catch(const std::exception& e)
                     {
-                        exit(EXIT_FAILURE);
+                        ErrCode("VAR", "Cannot convert to 'int'", LINE_COUNT, console);
+                        return EXIT_FAILURE;
                     }
                 }
                 break;
@@ -136,7 +142,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
                 }
                 if ((TOKENS_LINE[x] == ' ') || (TOKENS_LINE[x] == '\t') || (TOKENS_LINE[x] == '\0'))
                 {
-                    exit(EXIT_FAILURE);
+                    ErrCode("VAR", "Incorrect structure", LINE_COUNT, console);
+                    return EXIT_FAILURE;
                 }
                 VAR[LINE_COUNT] += TOKENS_LINE[x];
             }
@@ -156,9 +163,10 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
         {
             if (TOKENS_LINE[x] != ';')
             {
-                if ((TOKENS_LINE[x] == '\0') || (TOKENS_LINE[x] == '~'))
+                if ((TOKENS_LINE[x] == '\0') || (TOKENS_LINE[x] == '\r'))
                 {
-                    exit(EXIT_FAILURE);
+                    ErrCode("VAR", "Incorrect structure", LINE_COUNT, console);
+                    return EXIT_FAILURE;
                 }
                 if (str && TOKENS_LINE[x]=='\"')
                 {
@@ -166,7 +174,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
                     {
                         break;
                     } else {
-                        exit(EXIT_FAILURE);
+                        ErrCode("VAR", "';' missing", LINE_COUNT, console);
+                        return EXIT_FAILURE;
                     }
                 }
                 VAR_CONTENT += TOKENS_LINE[x];
@@ -189,7 +198,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
                     }
                     else
                     {
-                        exit(EXIT_FAILURE);
+                        ErrCode("VAR", "Incorrect structure", LINE_COUNT, console);
+                        return EXIT_FAILURE;
                     }
                 }
                 else
@@ -211,14 +221,16 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
                     }
                     catch(const std::exception& f)
                     {
-                        exit(EXIT_FAILURE);
+                        ErrCode("VAR", "Cannot convert to 'int'", LINE_COUNT, console);
+                        return EXIT_FAILURE;
                     }
                 }
             }
         }
         if (!VALIDATE)
         {
-            exit(EXIT_FAILURE);
+            ErrCode("VAR", "Incorrect structure", LINE_COUNT, console);
+            return EXIT_FAILURE;
         }
     }
     else if (TOKENS_LINE[0] == 'i' && TOKENS_LINE[1] == 'f' && PROCESS_ACTION[PROCESS_NUMBER] != 1)
@@ -230,7 +242,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
             {
                 if ((TOKENS_LINE[i] == '\t') || (TOKENS_LINE[i] == '\0') || (TOKENS_LINE[i] == ';'))
                 {
-                    exit(EXIT_FAILURE);
+                    ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+                    return EXIT_FAILURE;
                 }
                 if (TOKENS_LINE[i] == ' ')
                 {
@@ -238,7 +251,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
                 }
                 VAR[LINE_COUNT] += TOKENS_LINE[i];
             } else {
-                exit(EXIT_FAILURE);
+                ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+                return EXIT_FAILURE;
             }
         }
         int v=0;
@@ -259,7 +273,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
         }
         if (!VALIDATE)
         {
-            exit(EXIT_FAILURE);
+            ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+            return EXIT_FAILURE;
         }
         VALIDATE = false;
         if (str)
@@ -275,7 +290,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
         {
             if ((TOKENS_LINE[i] == '\t') || (TOKENS_LINE[i] == '\0') || (TOKENS_LINE[i] == ';'))    
             {
-                exit(EXIT_FAILURE);
+                ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+                return EXIT_FAILURE;
             }
             if (TOKENS_LINE[i] == ' ')
             {
@@ -300,12 +316,14 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
         }
         if (action == 'n')
         {
-            exit(EXIT_FAILURE);
+            ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+            return EXIT_FAILURE;
         }
         i++;
         if (TOKENS_LINE[i] != '$')
         {
-            exit(EXIT_FAILURE);
+            ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+            return EXIT_FAILURE;
         }
         LINE_COUNT++;
         i+=1;
@@ -315,7 +333,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
             {
                 if ((TOKENS_LINE[i] == '\t') || (TOKENS_LINE[i] == '\0'))
                 {
-                    exit(EXIT_FAILURE);
+                    ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+                    return EXIT_FAILURE;
                 }
                 TMP[LINE_COUNT] += TOKENS_LINE[i];
             } else {
@@ -339,7 +358,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
         }
         if (VALIDATE == false)
         {
-            exit(EXIT_FAILURE);
+            ErrCode("IF", "Variable not found", LINE_COUNT, console);
+            return EXIT_FAILURE;
         }
         if (str)
         {
@@ -353,7 +373,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
         }
         if (!VALIDATE)
         {
-            exit(EXIT_FAILURE);
+            ErrCode("IF", "Variable not found", LINE_COUNT, console);
+            return EXIT_FAILURE;
         }
         VALIDATE = false;
         if (action == '=')
@@ -406,7 +427,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
             }
             if (str)
             {
-                exit(EXIT_FAILURE);
+                ErrCode("IF", "cannot compare str with '<'", LINE_COUNT, console);
+                return EXIT_FAILURE;
             }
         }
         if (action == '>')
@@ -421,7 +443,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
             }
             if (str)
             {
-                exit(EXIT_FAILURE);
+                ErrCode("IF", "cannot compare str with '>'", LINE_COUNT, console);
+                return EXIT_FAILURE;
             }
         }
         i--;
@@ -451,13 +474,15 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
                 }
                 else
                 {
-                    exit(EXIT_FAILURE);
+                    ErrCode("IF", "';' missing", LINE_COUNT, console);
+                    return EXIT_FAILURE;
                 }
             }
         }
         else
         {
-            exit(EXIT_FAILURE);
+            ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+            return EXIT_FAILURE;
         }
     }
     else if ((TOKENS_LINE[0] == 'e') && (TOKENS_LINE[1] == 'n') && (TOKENS_LINE[2] == 'd'))
@@ -481,7 +506,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
             }
             else
             {
-                exit(EXIT_FAILURE);
+                ErrCode("END", "';' missing", LINE_COUNT, console);
+                return EXIT_FAILURE;
             }
         }
     }
@@ -490,39 +516,47 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
         int i = 4;
         if (TOKENS_LINE[i] != '\"')
         {
-            exit(EXIT_FAILURE);
+            ErrCode("OUT", "Incorrect structure", LINE_COUNT, console);
+            return EXIT_FAILURE;
         }
         i++;
         for (i; i< BUFFER; i++)
         {
-            if (TOKENS_LINE[i] == '\0')
+            if (TOKENS_LINE[i] == '\0' || TOKENS_LINE[i] == '\r')
             {
-                exit(EXIT_FAILURE);
+                ErrCode("OUT", "Incorrect structure", LINE_COUNT, console);
+                return EXIT_FAILURE;
             }
             if (TOKENS_LINE[i] == '\"')
             {
                 if (TOKENS_LINE[i+1]==';')
                 {
+                    VALIDATE = true;
                     break;
                 }
                 else
                 {
-                    exit(EXIT_FAILURE);
+                    ErrCode("OUT", "';' missing", LINE_COUNT, console);
+                    return EXIT_FAILURE;
                 }
             }
             TMP[LINE_COUNT] += TOKENS_LINE[i];
         }
-        std::cout << TMP[LINE_COUNT] << std::endl;
+        if (VALIDATE)
+        {
+            std::cout << TMP[LINE_COUNT] << std::endl;
+        }
     }
     else if ((TOKENS_LINE[0] == 'e') && (TOKENS_LINE[1] == 'x') && (TOKENS_LINE[2] == 'i') && (TOKENS_LINE[3] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] != 1))
     {
-        if (TOKENS_LINE[4]!=';')
+        if (TOKENS_LINE[4]==';')
         {
             exit(EXIT_SUCCESS);
         }
         else
         {
-            exit(EXIT_FAILURE);
+            ErrCode("END", "';' missing", LINE_COUNT, console);
+            return EXIT_FAILURE;
         }
     }
     else if ((TOKENS_LINE[0] == 'e') && (TOKENS_LINE[1] == 'x') && (TOKENS_LINE[2] == 'i') && (TOKENS_LINE[3] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] == 1));
@@ -532,7 +566,8 @@ void Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int *PROCESS_ACTION,
     {
         if (TOKENS_LINE[0] != '\0')
         {
-            exit(EXIT_FAILURE);
+            ErrCode("NameErr", "Incorrect arguments", LINE_COUNT, console);
+            return EXIT_FAILURE;
         }
     }
 }
