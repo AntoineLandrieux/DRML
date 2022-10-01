@@ -570,4 +570,5 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
             return EXIT_FAILURE;
         }
     }
+    return EXIT_SUCCESS;
 }
