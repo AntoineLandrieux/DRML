@@ -1,20 +1,20 @@
 // DRML Snapshot 1.0
 // Antoine Landrieux 2022
 
-#include <iostream>
 #include <fstream>
-#include <console.hpp>
+#include <iostream>
 #include <errcode.hpp>
+#include <console.hpp>
 #define MAX_BUFFER 999
+#define EXIT_SUCCESS 0
+#define EXIT_FAILURE 1
 
 #pragma region VAR
-bool console = false;
 // INT
-int BUFFER = 0;
 int LINE_COUNT = 0;
 // Function
+int Lexing();
 void readFromFile(char fileName[]);
-void Lexing();
 #pragma endregion VAR
 
 #include <execute.hpp>
@@ -23,10 +23,12 @@ int main(int argc, char *argv[])
 {
     if (argv[1] == NULL)
     {
-        console = true;
         consoleInit();
     }
-    readFromFile(argv[1]);
+    else
+    {
+        readFromFile(argv[1]);
+    }
     return EXIT_SUCCESS;
 }
 
@@ -47,31 +49,35 @@ void readFromFile(char fileName[])
     }
 }
 
-void Lexing(std::string LINE)
+int Lexing(std::string LINE)
 {
-    if (!console)
-    {
-        LINE_COUNT++;
-    }
-    bool CheckSpace = false;
-    BUFFER = LINE.length()+1;
+    LINE_COUNT++;
+    int CheckSpace = 0;
+    int BUFFER = LINE.length()+1;
     if (BUFFER > MAX_BUFFER)
     {
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
     char TOKENS_LINE[BUFFER];
     int a = 0;
     for (int i=0; i<LINE.length()+1; i++)
     {
-        if (LINE[i]!=' ' && LINE[i]!='\t' && CheckSpace == false)
+        if (LINE[i]!=' ' && LINE[i]!='\t' && CheckSpace == 0)
         {
-            CheckSpace = true;
+            CheckSpace = 1;
             TOKENS_LINE[a++] = LINE[i];
         }
-        else if (CheckSpace == true)
+        else if (CheckSpace == 1)
         {
             TOKENS_LINE[a++] = LINE[i];
         }
     }
-    Execute(TOKENS_LINE, BUFFER, LINE_COUNT, console);
+    if (Execute(TOKENS_LINE, BUFFER, LINE_COUNT, 0) == EXIT_FAILURE)
+    {
+        return EXIT_FAILURE;
+    }
+    else
+    {
+        return EXIT_SUCCESS;
+    }
 }

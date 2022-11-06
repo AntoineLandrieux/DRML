@@ -2,9 +2,12 @@
 #include <errcode.hpp>
 #include <execute.hpp>
 #define MAX_BUFFER 999
+#define EXIT_SUCCESS 0
+#define EXIT_FAILURE 1
 
 #pragma region VAR
 // Strings
+std::string NAMESPACE = "\0";
 std::string VARIABLE_NAME_INT[MAX_BUFFER];
 std::string VARIABLE_NAME_STRING[MAX_BUFFER];
 std::string VARIABLE_VALUE_STRING[MAX_BUFFER];
@@ -13,14 +16,15 @@ int PROCESS_ACTION[MAX_BUFFER];
 int PROCESS_NUMBER = 0;
 int VARIABLE_NUMBER_INT = 0;
 int VARIABLE_NUMBER_STRING = 0;
-float VARIABLE_VALUE_INT[MAX_BUFFER];
+int VARIABLE_VALUE_INT[MAX_BUFFER];
 #pragma endregion VAR
 
-int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
+int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
 {
-    bool str = false;
-    bool result = false;
-    bool VALIDATE = false;
+    int LAST_TOKEN = LAST;
+    int str = 0;
+    int result = 0;
+    int VALIDATE = 0;
     char action = 'n';
     int final = 0;
     std::string VAR[MAX_BUFFER];
@@ -28,15 +32,21 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
     std::string VAR_CONTENT="";
     std::string IntTMP;
     VAR_CONTENT = "";
-    if (TOKENS_LINE[0] == '$' && PROCESS_ACTION[PROCESS_NUMBER] != 1)
+    if (TOKENS_LINE[LAST_TOKEN] == '$' && PROCESS_ACTION[PROCESS_NUMBER] != 1)
     {
+        if (NAMESPACE != "\0")
+        {
+            TMP[LINE_COUNT] = NAMESPACE;
+            TMP[LINE_COUNT] += ':';
+            TMP[LINE_COUNT] += ':';
+        }
         for (int i = 1; i < BUFFER; i++)
         {
             if (TOKENS_LINE[i] != '=')
             {
                 if ((TOKENS_LINE[i] == ' ') || (TOKENS_LINE[i] == '\t') || (TOKENS_LINE[i] == '\0'))
                 {
-                    ErrCode("VAR", "Incorrect structure", LINE_COUNT, console);
+                    ErrCode("Incorrect Structure", "\'=\' missing", LINE_COUNT);
                     return EXIT_FAILURE;
                 }
                 TMP[LINE_COUNT] += TOKENS_LINE[i];
@@ -47,7 +57,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
                 {
                     if (TMP[LINE_COUNT] == VARIABLE_NAME_STRING[e])
                     {
-                        ErrCode("VAR", "Existing variable", LINE_COUNT, console);
+                        ErrCode("Incorrect argument", "Variable equ 1", LINE_COUNT);
                         return EXIT_FAILURE;
                     }
                 }
@@ -55,7 +65,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
                 {
                     if (TMP[LINE_COUNT] == VARIABLE_NAME_INT[e+1])
                     {
-                        ErrCode("VAR", "Existing variable", LINE_COUNT, console);
+                        ErrCode("Incorrect argument", "Variable equ 1", LINE_COUNT);
                         return EXIT_FAILURE;
                     }
                 }
@@ -63,10 +73,12 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
                 if (TOKENS_LINE[i] == '\"')
                 {
                     i++;
-                    str = true;
+                    str = 1;
                     VARIABLE_NUMBER_STRING++;
                     VARIABLE_NAME_STRING[VARIABLE_NUMBER_STRING] = TMP[LINE_COUNT];
-                } else {
+                }
+                else
+                {
                     VARIABLE_NUMBER_INT++;
                     VARIABLE_NAME_INT[VARIABLE_NUMBER_INT] = TMP[LINE_COUNT];
                 }
@@ -76,16 +88,17 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
                     {
                         if ((TOKENS_LINE[i] == '\0') || (TOKENS_LINE[i] == '\r'))
                         {
-                            ErrCode("VAR", "Incorrect structure", LINE_COUNT, console);
+                            ErrCode("Incorrect Structure", "\'\"\' missing", LINE_COUNT);
                             return EXIT_FAILURE;
                         }
                         if (str && TOKENS_LINE[i]=='\"')
                         {
                             if (TOKENS_LINE[i+1]==';')
                             {
+                                LAST_TOKEN += i+1;
                                 break;
                             } else {
-                                ErrCode("VAR", "';' missing", LINE_COUNT, console);
+                                ErrCode("Incorrect Structure", "\';\' missing", LINE_COUNT);
                                 return EXIT_FAILURE;
                             }
                         }
@@ -95,40 +108,25 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
                         }
                         else
                         {
-                            try
-                            {
-                                IntTMP += TOKENS_LINE[i];
-                            }
-                            catch (const std::exception& e)
-                            {
-                                ErrCode("VAR", "Cannot convert to 'int'", LINE_COUNT, console);
-                                return EXIT_FAILURE;
-                            }
+                            IntTMP += TOKENS_LINE[i];
                         }
                     }
                     else
                     {
+                        LAST_TOKEN += i;
                         break;
                     }
-                    try
+                    if (!str)
                     {
-                        if (!str)
-                        {
-                            int b = std::stoi(IntTMP);
-                            VARIABLE_VALUE_INT[VARIABLE_NUMBER_INT] = b;
-                        }
-                    }
-                    catch(const std::exception& e)
-                    {
-                        ErrCode("VAR", "Cannot convert to 'int'", LINE_COUNT, console);
-                        return EXIT_FAILURE;
+                        int b = std::stoi(IntTMP);
+                        VARIABLE_VALUE_INT[VARIABLE_NUMBER_INT] = b;
                     }
                 }
                 break;
             }
         }
     }
-    else if (TOKENS_LINE[0] == '&' && PROCESS_ACTION[PROCESS_NUMBER] != 1)
+    else if (TOKENS_LINE[LAST_TOKEN] == '&' && PROCESS_ACTION[PROCESS_NUMBER] != 1)
     {
         int x = 1;
         for (x; x < BUFFER; x++)
@@ -142,7 +140,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
                 }
                 if ((TOKENS_LINE[x] == ' ') || (TOKENS_LINE[x] == '\t') || (TOKENS_LINE[x] == '\0'))
                 {
-                    ErrCode("VAR", "Incorrect structure", LINE_COUNT, console);
+                    ErrCode("Incorrect Structure", "\'=\' missing", LINE_COUNT);
                     return EXIT_FAILURE;
                 }
                 VAR[LINE_COUNT] += TOKENS_LINE[x];
@@ -156,7 +154,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
         x++;
         if (TOKENS_LINE[x]=='\"')
         {
-            str = true;
+            str = 1;
             x++;
         }
         for (x; x < MAX_BUFFER; x++)
@@ -165,7 +163,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
             {
                 if ((TOKENS_LINE[x] == '\0') || (TOKENS_LINE[x] == '\r'))
                 {
-                    ErrCode("VAR", "Incorrect structure", LINE_COUNT, console);
+                    ErrCode("Incorrect Structure", "\';\' missing", LINE_COUNT);
                     return EXIT_FAILURE;
                 }
                 if (str && TOKENS_LINE[x]=='\"')
@@ -173,8 +171,10 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
                     if (TOKENS_LINE[x+1]==';')
                     {
                         break;
-                    } else {
-                        ErrCode("VAR", "';' missing", LINE_COUNT, console);
+                    }
+                    else
+                    {
+                        ErrCode("Incorrect Structure", "\';\' missing", LINE_COUNT);
                         return EXIT_FAILURE;
                     }
                 }
@@ -182,6 +182,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
             }
             else
             {
+                LAST_TOKEN += x;
                 break;
             }
         }
@@ -189,7 +190,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
         {
             if (VARIABLE_NAME_INT[i] == VAR[LINE_COUNT] || VARIABLE_NAME_STRING[i] == VAR[LINE_COUNT])
             {
-                VALIDATE = true;
+                VALIDATE = 1;
                 if (str)
                 {
                     if (action == '=')
@@ -198,51 +199,43 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
                     }
                     else
                     {
-                        ErrCode("VAR", "Incorrect structure", LINE_COUNT, console);
+                        ErrCode("Incorrect Structure", "Impossible action", LINE_COUNT);
                         return EXIT_FAILURE;
                     }
                 }
                 else
                 {
-                    try
+                    if (action == '=')
                     {
-                        if (action == '=')
-                        {
-                            VARIABLE_VALUE_INT[i] = std::stoi(VAR_CONTENT);
-                        }
-                        else if (action == '+')
-                        {
-                            VARIABLE_VALUE_INT[i] += std::stoi(VAR_CONTENT);
-                        }
-                        else
-                        {
-                            VARIABLE_VALUE_INT[i] -= std::stoi(VAR_CONTENT);
-                        }
+                        VARIABLE_VALUE_INT[i] = std::stoi(VAR_CONTENT);
                     }
-                    catch(const std::exception& f)
+                    else if (action == '+')
                     {
-                        ErrCode("VAR", "Cannot convert to 'int'", LINE_COUNT, console);
-                        return EXIT_FAILURE;
+                        VARIABLE_VALUE_INT[i] += std::stoi(VAR_CONTENT);
+                    }
+                    else
+                    {
+                        VARIABLE_VALUE_INT[i] -= std::stoi(VAR_CONTENT);
                     }
                 }
             }
         }
         if (!VALIDATE)
         {
-            ErrCode("VAR", "Incorrect structure", LINE_COUNT, console);
+            ErrCode("Incorrect Structure", " ", LINE_COUNT);
             return EXIT_FAILURE;
         }
     }
-    else if (TOKENS_LINE[0] == 'i' && TOKENS_LINE[1] == 'f' && PROCESS_ACTION[PROCESS_NUMBER] != 1)
+    else if (TOKENS_LINE[LAST_TOKEN] == 'i' && TOKENS_LINE[LAST_TOKEN+1] == 'f' && PROCESS_ACTION[PROCESS_NUMBER] != 1)
     {
-        int i=4;
+        int i=LAST_TOKEN+4;
         for (i; i<BUFFER; i++)
         {
-            if (TOKENS_LINE[3] == '$')
+            if (TOKENS_LINE[LAST_TOKEN+3] == '$')
             {
                 if ((TOKENS_LINE[i] == '\t') || (TOKENS_LINE[i] == '\0') || (TOKENS_LINE[i] == ';'))
                 {
-                    ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+                    ErrCode("Incorrect Structure", "value missing", LINE_COUNT);
                     return EXIT_FAILURE;
                 }
                 if (TOKENS_LINE[i] == ' ')
@@ -250,8 +243,10 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
                     break;
                 }
                 VAR[LINE_COUNT] += TOKENS_LINE[i];
-            } else {
-                ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+            }
+            else
+            {
+                ErrCode("Incorrect Structure", "Variable value missing", LINE_COUNT);
                 return EXIT_FAILURE;
             }
         }
@@ -260,23 +255,23 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
         {
             if (VARIABLE_NAME_INT[v] == VAR[LINE_COUNT])
             {
-                str = false;
-                VALIDATE = true;
+                str = 0;
+                VALIDATE = 1;
                 break;
             }
             else if (VARIABLE_NAME_STRING[v] == VAR[LINE_COUNT])
             {
-                str = true;
-                VALIDATE = true;
+                str = 1;
+                VALIDATE = 1;
                 break;
             }
         }
         if (!VALIDATE)
         {
-            ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+            ErrCode("Incorrect Structure", "Variable missing", LINE_COUNT);
             return EXIT_FAILURE;
         }
-        VALIDATE = false;
+        VALIDATE = 0;
         if (str)
         {
             TMP[LINE_COUNT] = VARIABLE_VALUE_STRING[v];
@@ -290,7 +285,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
         {
             if ((TOKENS_LINE[i] == '\t') || (TOKENS_LINE[i] == '\0') || (TOKENS_LINE[i] == ';'))    
             {
-                ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+                ErrCode("Incorrect Structure", "\';\' missing", LINE_COUNT);
                 return EXIT_FAILURE;
             }
             if (TOKENS_LINE[i] == ' ')
@@ -316,13 +311,13 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
         }
         if (action == 'n')
         {
-            ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+            ErrCode("Incorrect Structure", "Enter an valid action", LINE_COUNT);
             return EXIT_FAILURE;
         }
         i++;
         if (TOKENS_LINE[i] != '$')
         {
-            ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+            ErrCode("Incorrect Structure", "Variable value missing", LINE_COUNT);
             return EXIT_FAILURE;
         }
         LINE_COUNT++;
@@ -333,7 +328,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
             {
                 if ((TOKENS_LINE[i] == '\t') || (TOKENS_LINE[i] == '\0'))
                 {
-                    ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+                    ErrCode("Incorrect Structure", "Value missing", LINE_COUNT-1);
                     return EXIT_FAILURE;
                 }
                 TMP[LINE_COUNT] += TOKENS_LINE[i];
@@ -347,87 +342,88 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
         {
             if (std::string(TMP[LINE_COUNT]) == std::string(VARIABLE_NAME_STRING[bnb]))
             {
-                VALIDATE = true;
+                VALIDATE = 1;
                 break;
             }
             if (std::string(TMP[LINE_COUNT]) == std::string(VARIABLE_NAME_INT[bnb]))
             {
-                VALIDATE = true;
+                VALIDATE = 1;
                 break;
             }
         }
-        if (VALIDATE == false)
+        if (VALIDATE == 0)
         {
-            ErrCode("IF", "Variable not found", LINE_COUNT, console);
+            ErrCode("Incorrect Structure", "Variable missing", LINE_COUNT-1);
             return EXIT_FAILURE;
         }
+        VALIDATE = 0;
         if (str)
         {
             TMP[LINE_COUNT] = VARIABLE_VALUE_STRING[i];
-            VALIDATE = true;
+            VALIDATE = 1;
         }
         else
         {
             TMP[LINE_COUNT] = VARIABLE_VALUE_INT[i];
-            VALIDATE = true;
+            VALIDATE = 1;
         }
         if (!VALIDATE)
         {
-            ErrCode("IF", "Variable not found", LINE_COUNT, console);
+            ErrCode("Incorrect Structure", " ", LINE_COUNT);
             return EXIT_FAILURE;
         }
-        VALIDATE = false;
+        VALIDATE = 0;
         if (action == '=')
         {
-            if ((str == false) && (VARIABLE_VALUE_INT[v] == VARIABLE_VALUE_INT[bnb]))
+            if ((str == 0) && (VARIABLE_VALUE_INT[v] == VARIABLE_VALUE_INT[bnb]))
             {
-                result = true;
+                result = 1;
             }
-            else if ((str == false) && (VARIABLE_VALUE_INT[v] != VARIABLE_VALUE_INT[bnb]))
+            else if ((str == 0) && (VARIABLE_VALUE_INT[v] != VARIABLE_VALUE_INT[bnb]))
             {
-                result = false;
+                result = 0;
             }
-            if ((str == true) && (VARIABLE_VALUE_STRING[v] == VARIABLE_VALUE_STRING[bnb]))
+            if ((str == 1) && (VARIABLE_VALUE_STRING[v] == VARIABLE_VALUE_STRING[bnb]))
             {
-                result = true;
+                result = 1;
             }
-            else if ((str == true) && (VARIABLE_VALUE_STRING[v] != VARIABLE_VALUE_STRING[bnb]))
+            else if ((str == 1) && (VARIABLE_VALUE_STRING[v] != VARIABLE_VALUE_STRING[bnb]))
             {
-                result = false;
+                result = 0;
             }
         }
         if (action == '!')
         {
-            if (str == false && VARIABLE_VALUE_INT[v] != VARIABLE_VALUE_INT[bnb])
+            if (str == 0 && VARIABLE_VALUE_INT[v] != VARIABLE_VALUE_INT[bnb])
             {
-                result = true;
+                result = 1;
             }
-            else if (str == false && VARIABLE_VALUE_INT[v] == VARIABLE_VALUE_INT[bnb])
+            else if (str == 0 && VARIABLE_VALUE_INT[v] == VARIABLE_VALUE_INT[bnb])
             {
-                result = false;
+                result = 0;
             }
-            if (str == true && VARIABLE_VALUE_STRING[v] != VARIABLE_VALUE_STRING[bnb])
+            if (str == 1 && VARIABLE_VALUE_STRING[v] != VARIABLE_VALUE_STRING[bnb])
             {
-                result = true;
+                result = 1;
             }
-            else if (str == true && VARIABLE_VALUE_STRING[v] == VARIABLE_VALUE_STRING[bnb])
+            else if (str == 1 && VARIABLE_VALUE_STRING[v] == VARIABLE_VALUE_STRING[bnb])
             {
-                result = false;
+                result = 0;
             }
         }
         if (action == '<')
         {
             if (!str && VARIABLE_VALUE_INT[v] <= VARIABLE_VALUE_INT[bnb])
             {
-                result = true;
+                result = 1;
             }
             else if (!str && VARIABLE_VALUE_INT[v] <= VARIABLE_VALUE_INT[bnb])
             {
-                result = false;
+                result = 0;
             }
             if (str)
             {
-                ErrCode("IF", "cannot compare str with '<'", LINE_COUNT, console);
+                ErrCode("Incorrect Structure", "Can't compare str with \'<\'", LINE_COUNT);
                 return EXIT_FAILURE;
             }
         }
@@ -435,15 +431,15 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
         {
             if (!str && VARIABLE_VALUE_INT[v] >= VARIABLE_VALUE_INT[bnb])
             {
-                result = true;
+                result = 1;
             }
             else if (!str && VARIABLE_VALUE_INT[v] >= VARIABLE_VALUE_INT[bnb])
             {
-                result = false;
+                result = 0;
             }
             if (str)
             {
-                ErrCode("IF", "cannot compare str with '>'", LINE_COUNT, console);
+                ErrCode("Incorrect Structure", "Can't compare str with \'>\'", LINE_COUNT);
                 return EXIT_FAILURE;
             }
         }
@@ -453,122 +449,257 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, bool console)
         if (TOKENS_LINE[i] == 'e' && TOKENS_LINE[i+1] == 'x' && TOKENS_LINE[i+2] == 'e' && TOKENS_LINE[i+3] == 'c')
         {
             i+=4;
-            if (result != true)
+            PROCESS_NUMBER++;
+            if (result != 1)
             {
-                PROCESS_NUMBER++;
                 PROCESS_ACTION[PROCESS_NUMBER] = 1;
             }
             for (i; i<BUFFER; i++)
             {
-                if ((TOKENS_LINE[i]=='\0' && final==1) || TOKENS_LINE[i]=='\t' || (TOKENS_LINE[i]=='\n' && final==1) || TOKENS_LINE[i]=='\r' || TOKENS_LINE[i]==' ')
+                if (TOKENS_LINE[i]=='\t' || TOKENS_LINE[i]==' ')
                 {
                     continue;
                 }
                 else if (TOKENS_LINE[i]==':' && final==0)
                 {
                     final=1;
-                }
-                else if (TOKENS_LINE[i]=='~' && final==1)
-                {
+                    LAST_TOKEN += i;
                     break;
                 }
                 else
                 {
-                    ErrCode("IF", "';' missing", LINE_COUNT, console);
+                    ErrCode("Incorrect Structure", "\':\' missing", LINE_COUNT);
                     return EXIT_FAILURE;
                 }
             }
         }
         else
         {
-            ErrCode("IF", "Incorrect structure", LINE_COUNT, console);
+            ErrCode("Incorrect Structure", "\'exec\' missing", LINE_COUNT);
             return EXIT_FAILURE;
         }
     }
-    else if ((TOKENS_LINE[0] == 'e') && (TOKENS_LINE[1] == 'n') && (TOKENS_LINE[2] == 'd'))
+    else if ((TOKENS_LINE[LAST_TOKEN] == 'e') && (TOKENS_LINE[LAST_TOKEN+1] == 'n') && (TOKENS_LINE[LAST_TOKEN+2] == 'd'))
     {
-        int i = 3;
+        int i = LAST_TOKEN+3;
         for (i; i<BUFFER; i++)
         {
-            if ((TOKENS_LINE[i]=='\0' && final==1) || TOKENS_LINE[i]=='\t' || (TOKENS_LINE[i]=='\n' && final==1) || TOKENS_LINE[i]=='\r' || TOKENS_LINE[i]==' ')
+            if (TOKENS_LINE[i]=='\t' || TOKENS_LINE[i]==' ')
             {
                 continue;
-            }
-            else if (TOKENS_LINE[i]=='~' && final==1)
-            {
-                break;
             }
             else if (TOKENS_LINE[i] == ';' && final==0)
             {
                 final=1;
-                PROCESS_ACTION[PROCESS_NUMBER] = 0;   
+                LAST_TOKEN += i;
+                if (PROCESS_NUMBER == 0)
+                {
+                    ErrCode("PROCESS", "Process equ 0", LINE_COUNT);
+                    return EXIT_FAILURE;
+                }
+                if (PROCESS_ACTION[PROCESS_NUMBER] == 2)
+                {
+                    NAMESPACE = "\0";
+                }
+                PROCESS_ACTION[PROCESS_NUMBER] = 0;
                 PROCESS_NUMBER--;
+                break;
             }
             else
             {
-                ErrCode("END", "';' missing", LINE_COUNT, console);
+                ErrCode("Incorrect Structure", "\';\' missing", LINE_COUNT);
                 return EXIT_FAILURE;
             }
         }
     }
-    else if ((TOKENS_LINE[0] == 'o') && (TOKENS_LINE[1] == 'u') && (TOKENS_LINE[2] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] != 1))
+    else if ((TOKENS_LINE[LAST_TOKEN] == 'e') && (TOKENS_LINE[LAST_TOKEN+1] == 'l') && (TOKENS_LINE[LAST_TOKEN+2] == 's') && (TOKENS_LINE[LAST_TOKEN+3] == 'e'))
     {
-        int i = 4;
-        if (TOKENS_LINE[i] != '\"')
+        for (int i=LAST_TOKEN+4; i< BUFFER; i++)
         {
-            ErrCode("OUT", "Incorrect structure", LINE_COUNT, console);
-            return EXIT_FAILURE;
+            if (TOKENS_LINE[i]==' ' | TOKENS_LINE[i]=='\t')
+            {
+                continue;
+            }
+            else if (TOKENS_LINE[i]==':')
+            {
+                LAST_TOKEN += i;
+                if (PROCESS_NUMBER <= 0 || PROCESS_ACTION[PROCESS_NUMBER] == 2)
+                {
+                    ErrCode("Incorrect Structure", "\'if\' missing", LINE_COUNT);
+                    return EXIT_FAILURE;
+                }
+                if (PROCESS_ACTION[PROCESS_NUMBER] == 0)
+                {
+                    PROCESS_ACTION[PROCESS_NUMBER] = 1;
+                }
+                else if (PROCESS_ACTION[PROCESS_NUMBER] == 1)
+                {
+                    PROCESS_ACTION[PROCESS_NUMBER] = 0;
+                }
+                else
+                {
+                    ErrCode("Incorrect Structure", "\':\' missing", LINE_COUNT);
+                    return EXIT_FAILURE;
+                }
+                break;
+            }
+            else
+            {
+                ErrCode("Incorrect Structure", "\':\' missing", LINE_COUNT);
+                return EXIT_FAILURE;
+            }
+        }
+    }
+    else if ((TOKENS_LINE[LAST_TOKEN] == 'o') && (TOKENS_LINE[LAST_TOKEN+1] == 'u') && (TOKENS_LINE[LAST_TOKEN+2] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] != 1))
+    {
+        int i = LAST_TOKEN+4;
+        for (i; i < BUFFER; i++)
+        {
+            if (TOKENS_LINE[i]==' ' | TOKENS_LINE[i]=='\t')
+            {
+                continue;
+            }
+            else if (TOKENS_LINE[i]=='\"')
+            {
+                break;
+            }
+            else
+            {
+                ErrCode("Incorrect Structure", "\'\"\' missing", LINE_COUNT);
+                return EXIT_FAILURE;
+            }
         }
         i++;
         for (i; i< BUFFER; i++)
         {
             if (TOKENS_LINE[i] == '\0' || TOKENS_LINE[i] == '\r')
             {
-                ErrCode("OUT", "Incorrect structure", LINE_COUNT, console);
+                ErrCode("Incorrect Structure", "\'\"\' missing", LINE_COUNT);
                 return EXIT_FAILURE;
             }
             if (TOKENS_LINE[i] == '\"')
             {
-                if (TOKENS_LINE[i+1]==';')
-                {
-                    VALIDATE = true;
-                    break;
-                }
-                else
-                {
-                    ErrCode("OUT", "';' missing", LINE_COUNT, console);
-                    return EXIT_FAILURE;
-                }
+                i++;
+                break;
             }
             TMP[LINE_COUNT] += TOKENS_LINE[i];
         }
-        if (VALIDATE)
+        for (i; i < BUFFER; i++)
+        {
+            if (TOKENS_LINE[i]==' ' || TOKENS_LINE[i]=='\t')
+            {
+                continue;
+            }
+            else if (TOKENS_LINE[i]==';')
+            {
+                LAST_TOKEN += i;
+                VALIDATE = 1;
+                break;
+            }
+            else
+            {
+                ErrCode("Incorrect Structure", "\';\' missing", LINE_COUNT);
+                return EXIT_FAILURE;
+            }
+        }
+        if (VALIDATE == 1)
         {
             std::cout << TMP[LINE_COUNT] << std::endl;
         }
     }
-    else if ((TOKENS_LINE[0] == 'e') && (TOKENS_LINE[1] == 'x') && (TOKENS_LINE[2] == 'i') && (TOKENS_LINE[3] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] != 1))
+    else if ((TOKENS_LINE[LAST_TOKEN] == 'n') && (TOKENS_LINE[LAST_TOKEN+1] == 'a') && (TOKENS_LINE[LAST_TOKEN+2] == 'm') && (TOKENS_LINE[LAST_TOKEN+3] == 'e') && (TOKENS_LINE[LAST_TOKEN+4] == 's') && (TOKENS_LINE[LAST_TOKEN+5] == 'p') && (TOKENS_LINE[LAST_TOKEN+6] == 'a') && (TOKENS_LINE[LAST_TOKEN+7] == 'c') && (TOKENS_LINE[LAST_TOKEN+8] == 'e') && (PROCESS_ACTION[PROCESS_NUMBER] != 1))
     {
-        if (TOKENS_LINE[4]==';')
+        VALIDATE = 0;
+        if (NAMESPACE != "\0")
         {
-            exit(EXIT_SUCCESS);
-        }
-        else
-        {
-            ErrCode("END", "';' missing", LINE_COUNT, console);
+            ErrCode("Incorrect Structure", "Can\'t place tow namespace", LINE_COUNT);
             return EXIT_FAILURE;
         }
-    }
-    else if ((TOKENS_LINE[0] == 'e') && (TOKENS_LINE[1] == 'x') && (TOKENS_LINE[2] == 'i') && (TOKENS_LINE[3] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] == 1));
-    else if ((TOKENS_LINE[0] == 'o') && (TOKENS_LINE[1] == 'u') && (TOKENS_LINE[2] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] == 1));
-    else if ((TOKENS_LINE[0] == '$' && PROCESS_ACTION[PROCESS_NUMBER] == 1) || (TOKENS_LINE[0] == '&' && PROCESS_ACTION[PROCESS_NUMBER] == 1));
-    else if (TOKENS_LINE[0] != '~')
-    {
-        if (TOKENS_LINE[0] != '\0')
+        int i = LAST_TOKEN+9;
+        for (i; i<BUFFER; i++)
         {
-            ErrCode("NameErr", "Incorrect arguments", LINE_COUNT, console);
-            return EXIT_FAILURE;
+            if ((TOKENS_LINE[i]==' ' || TOKENS_LINE[i]=='\t') && (VALIDATE == 0))
+            {
+                continue;
+            }
+            else if (TOKENS_LINE[i]==' ' && VALIDATE == 1)
+            {
+                i++;
+                break;
+            }
+            else if (TOKENS_LINE[i]==':' && VALIDATE == 1)
+            {
+                break;
+            }
+            else if (TOKENS_LINE[i]=='~' || TOKENS_LINE[i]=='\0' || TOKENS_LINE[i]=='\r')
+            {
+                ErrCode("Incorrect Structure", "\':\' missing", LINE_COUNT);
+                return EXIT_FAILURE;
+            }
+            else
+            {
+                VALIDATE = 1;
+                TMP[LINE_COUNT] += TOKENS_LINE[i];
+            }
+        }
+        VALIDATE = 0;
+        for (i; i < BUFFER; i++)
+        {
+            if ((TOKENS_LINE[i]==' ' || TOKENS_LINE[i]=='\t'))
+            {
+                continue;
+            }
+            else if (TOKENS_LINE[i]==':')
+            {
+                break;
+            }
+            else
+            {
+                ErrCode("Incorrect Structure", "\':\' missing", LINE_COUNT);
+                return EXIT_FAILURE;
+            }
+        }
+        PROCESS_NUMBER++;
+        PROCESS_ACTION[PROCESS_NUMBER] = 2;
+        NAMESPACE = TMP[LINE_COUNT];
+    }
+    else if ((TOKENS_LINE[LAST_TOKEN] == 'e') && (TOKENS_LINE[LAST_TOKEN+1] == 'x') && (TOKENS_LINE[LAST_TOKEN+2] == 'i') && (TOKENS_LINE[LAST_TOKEN+3] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] != 1))
+    {
+        for (int i=LAST_TOKEN+4; i< BUFFER; i++)
+        {
+            if (TOKENS_LINE[i]==' ' || TOKENS_LINE[i]=='\t')
+            {
+                continue;
+            }
+            else if (TOKENS_LINE[i]==';')
+            {
+                exit(EXIT_SUCCESS);
+            }
+            else
+            {
+                ErrCode("Incorrect Structure", "\':\' missing", LINE_COUNT);
+                return EXIT_FAILURE;
+            }
         }
     }
-    return EXIT_SUCCESS;
+    else if ((TOKENS_LINE[LAST_TOKEN] == 'e') && (TOKENS_LINE[LAST_TOKEN+1] == 'x') && (TOKENS_LINE[2] == 'i') && (TOKENS_LINE[LAST_TOKEN+3] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] == 1));
+    else if ((TOKENS_LINE[LAST_TOKEN] == 'o') && (TOKENS_LINE[LAST_TOKEN+1] == 'u') && (TOKENS_LINE[2] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] == 1));
+    else if ((TOKENS_LINE[LAST_TOKEN] == '$' && PROCESS_ACTION[PROCESS_NUMBER] == 1) || (TOKENS_LINE[0] == '&' && PROCESS_ACTION[PROCESS_NUMBER] == 1));
+    else if (TOKENS_LINE[LAST_TOKEN] == ' ' || TOKENS_LINE[LAST_TOKEN] == '\t');
+    else if (TOKENS_LINE[LAST_TOKEN] != '~')
+    {
+        if (TOKENS_LINE[LAST_TOKEN] != '\0')
+        {
+            return EXIT_FAILURE;
+        } else {
+            LAST_TOKEN = 0;
+            return EXIT_SUCCESS;
+        }
+    }
+    else
+    {
+        LAST_TOKEN = 0;
+        return EXIT_SUCCESS;
+    }
+    Execute(TOKENS_LINE, BUFFER, LINE_COUNT, LAST_TOKEN+1);
 }

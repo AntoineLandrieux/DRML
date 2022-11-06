@@ -2,6 +2,6 @@
 #define CONSOLE_HPP
 
 void consoleInit();
-void Lexing(std::string LINE);
+int Lexing(std::string LINE);
 
 #endif
