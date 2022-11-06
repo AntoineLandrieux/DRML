@@ -552,6 +552,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
     }
     else if ((TOKENS_LINE[LAST_TOKEN] == 'o') && (TOKENS_LINE[LAST_TOKEN+1] == 'u') && (TOKENS_LINE[LAST_TOKEN+2] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] != 1))
     {
+        int isVar = 0;
         int i = LAST_TOKEN+4;
         for (i; i < BUFFER; i++)
         {
@@ -563,9 +564,14 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             {
                 break;
             }
+            else if (TOKENS_LINE[i]=='$')
+            {
+                isVar = 1;
+                break;
+            }
             else
             {
-                ErrCode("Incorrect Structure", "\'\"\' missing", LINE_COUNT);
+                ErrCode("Incorrect Structure", "\'\"\' or variable missing", LINE_COUNT);
                 return EXIT_FAILURE;
             }
         }
@@ -577,12 +583,41 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                 ErrCode("Incorrect Structure", "\'\"\' missing", LINE_COUNT);
                 return EXIT_FAILURE;
             }
-            if (TOKENS_LINE[i] == '\"')
+            if (TOKENS_LINE[i] == '\"' && isVar == 0)
             {
                 i++;
                 break;
             }
-            TMP[LINE_COUNT] += TOKENS_LINE[i];
+            if (TOKENS_LINE[i] == ' ' && isVar == 1)
+            {
+                i++;
+                break;
+            }
+            if (TOKENS_LINE[i] == ';' && isVar == 1)
+            {
+                break;
+            }
+            if (isVar == 0 && TOKENS_LINE[i] == '\\')
+            {
+                if (TOKENS_LINE[i+1] == 'n')
+                {
+                    TMP[LINE_COUNT] += '\n';
+                }
+                else if (TOKENS_LINE[i+1] == '\\')
+                {
+                    TMP[LINE_COUNT] += '\\';
+                }
+                else
+                {
+                    ErrCode("Incorrect Structure", "\'\\type\' incorrect", LINE_COUNT);
+                    return EXIT_FAILURE;
+                }
+                i++;
+            }
+            else
+            {
+                TMP[LINE_COUNT] += TOKENS_LINE[i];
+            }
         }
         for (i; i < BUFFER; i++)
         {
@@ -604,7 +639,47 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
         }
         if (VALIDATE == 1)
         {
-            std::cout << TMP[LINE_COUNT] << std::endl;
+            if (isVar == 1)
+            {
+                str = 0;
+                VALIDATE = 0;
+                int e = 0;
+                for (e; e < VARIABLE_NUMBER_STRING; e++)
+                {
+                    if (TMP[LINE_COUNT] == VARIABLE_NAME_STRING[e])
+                    {
+                        str = 1;
+                        VALIDATE = 1;
+                    }
+                }
+                if (VALIDATE != 1)
+                {
+                    e = 0;
+                    for (e; e < VARIABLE_NUMBER_INT; e++)
+                    {
+                        if (TMP[LINE_COUNT] == VARIABLE_NAME_INT[e+1])
+                        {
+                            VALIDATE = 1;
+                        }
+                    }
+                }
+                if (VALIDATE == 0) {
+                    ErrCode("Incorrect Structure", "Variable missing", LINE_COUNT);
+                    return EXIT_FAILURE;
+                }
+                if (str == 1)
+                {
+                    std::cout << VARIABLE_VALUE_STRING[e-1];
+                }
+                else
+                {
+                    std::cout << VARIABLE_VALUE_INT[e-1];
+                }
+            }
+            else
+            {
+                std::cout << TMP[LINE_COUNT];
+            }
         }
     }
     else if ((TOKENS_LINE[LAST_TOKEN] == 'n') && (TOKENS_LINE[LAST_TOKEN+1] == 'a') && (TOKENS_LINE[LAST_TOKEN+2] == 'm') && (TOKENS_LINE[LAST_TOKEN+3] == 'e') && (TOKENS_LINE[LAST_TOKEN+4] == 's') && (TOKENS_LINE[LAST_TOKEN+5] == 'p') && (TOKENS_LINE[LAST_TOKEN+6] == 'a') && (TOKENS_LINE[LAST_TOKEN+7] == 'c') && (TOKENS_LINE[LAST_TOKEN+8] == 'e') && (PROCESS_ACTION[PROCESS_NUMBER] != 1))
