@@ -4,7 +4,7 @@ Programming language
 
 <br />
 
-DRML - 2022 LANDRIEUX Antoine - zydev.fr@gmail.com
+DRML - 2022 LANDRIEUX Antoine
 
 <br />
 
