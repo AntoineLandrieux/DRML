@@ -16,7 +16,15 @@ DRML is an open-source project
 
 **External libraries used by DRML**
 
+For windows&copy;
+
 <ul>
   <li>libgcc_s_dw2-1.dll</li>
   <li>libstdc++-6.dll</li>
+</ul>
+
+For linux&copy;
+
+<ul>
+  <li>none</li>
 </ul>
