@@ -28,6 +28,8 @@ int main(int argc, char *argv[])
     else
     {
         readFromFile(argv[1]);
+        std::cout << "\nPress Enter for quit";
+        getchar();
     }
     return EXIT_SUCCESS;
 }
