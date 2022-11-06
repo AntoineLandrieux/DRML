@@ -1,6 +1,6 @@
 # DRML
 
-Langage de programmation
+Programming language
 
 <br />
 
