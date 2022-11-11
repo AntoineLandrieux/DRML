@@ -1,4 +1,4 @@
-// DRML Snapshot 1.0
+// DRML Snapshot 22w15a
 // Antoine Landrieux 2022
 
 #include <fstream>
@@ -45,8 +45,9 @@ void readFromFile(char fileName[])
             Lexing(LINE);
         }
     }
-    else if (!getline(file, LINE))
+    else
     {
+        ErrCode("FILE", "Can't open file", -1);
         exit(EXIT_FAILURE);
     }
 }

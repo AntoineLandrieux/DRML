@@ -9,10 +9,10 @@
 void consoleInit()
 {
     std::string LINE;
-    printf("DRML Snapshot 1.0 on win32\nType \"exit;\" for quit\n\n");
+    printf("DRML Snapshot 22w15a 32Bits\nType \"exit;\" for quit\n");
     while (1)
     {
-        printf(">>> ");
+        printf("\n>>> ");
         getline(std::cin, LINE);
         Lexing(LINE);
     }
