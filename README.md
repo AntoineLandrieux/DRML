@@ -1,29 +1,41 @@
-# DRML
+﻿# **Welcome to DRML!**
 
-Programming language
+![DMRLicon](https://raw.githubusercontent.com/AntoineLandrieux/DRML/main/resources/drml24.png) Programming Language
 
-<br />
+
+## **Contribute**
 
 DRML - 2022 LANDRIEUX Antoine
 
-<br />
 
-**Contribute**
+## **External libraries used by DRML**
 
-DRML is an open-source project
+- **For windows©**
 
-<hr />
+  - libgcc_s_dw2-1.dll
+  - libstdc++\-6.dll
 
-**External libraries used by DRML**
+- **For linux©**
+  - none
 
-<ul>
-  <li>For windows&copy;</li>
-  <ul>
-    <li>libgcc_s_dw2-1.dll</li>
-    <li>libstdc++-6.dll</li>
-  </ul>
-  <li>For linux&copy;</li>
-  <ul>
-    <li>none</li>
-  </ul>
-</ul>
+## **Exemple**
+
+    ~ This is a comment
+    
+    namespace app :
+        $start=1;
+        $stop=0;
+    end;
+    
+    if $app::start != $app::stop exec :
+        out "START\n";
+        &app::start=0;
+        if $app::start == $app::stop exec :
+            out "STOP";
+        else :
+            out "CONTINUE";
+        end;
+    end;
+    
+    exit;
+
