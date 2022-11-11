@@ -105,7 +105,6 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                         }
                         if (str)
                         {
-                            std::cout << VARIABLE_NUMBER_STRING;
                             if (TOKENS_LINE[i] == '\\')
                             {
                                 if (TOKENS_LINE[i+1] == 'n')
@@ -833,7 +832,6 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
     {
         if (TOKENS_LINE[LAST_TOKEN] != '\0')
         {
-            
             return EXIT_FAILURE;
         } else {
             LAST_TOKEN = 0;
@@ -846,4 +844,5 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
         return EXIT_SUCCESS;
     }
     Execute(TOKENS_LINE, BUFFER, LINE_COUNT, LAST_TOKEN+1);
+    return EXIT_SUCCESS;
 }
