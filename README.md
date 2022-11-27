@@ -1,6 +1,6 @@
 ﻿# **Welcome to DRML!**
 
-![DMRLicon](https://raw.githubusercontent.com/AntoineLandrieux/DRML/main/resources/drml24.png) Programming Language
+![DMRLicon](https://raw.githubusercontent.com/AntoineLandrieux/DRML/main/resources/drml24.png) SHELL Language
 
 
 ## **Contribute**
