@@ -1,22 +1,17 @@
 DRML
-
-===============
-
-Programming language
-
-=======================
-
+SHELL language
 DRML - 2022 LANDRIEUX Antoine
 
 Contribute
-
-DRML is an open-source project
+  DRML is an open-source project
 
 External libraries used by DRML
 
-For windows
-libgcc_s_dw2-1.dll
-libstdc++-6.dll
+  For windows
+  
+    libgcc_s_dw2-1.dll
+    libstdc++-6.dll
 
-For linux
-none
+  For linux
+  
+    none
