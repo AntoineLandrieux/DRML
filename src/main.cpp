@@ -1,25 +1,21 @@
-// DRML Snapshot 22w15a
+// DRML Snapshot 22w2112a
 // Antoine Landrieux 2022
 
 #include <fstream>
 #include <iostream>
+#include <string>
 #include <errcode.hpp>
 #include <console.hpp>
 #define MAX_BUFFER 999
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
-#pragma region VAR
-// INT
 int LINE_COUNT = 0;
-// Function
-int Lexing();
-void readFromFile(char fileName[]);
-#pragma endregion VAR
+static void readFromFile(char fileName[]);
 
 #include <execute.hpp>
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
     if (argv[1] == NULL)
     {
@@ -27,14 +23,17 @@ int main(int argc, char *argv[])
     }
     else
     {
-        readFromFile(argv[1]);
+        for (int i=0; i<argc; i++)
+        {
+            readFromFile(argv[i]);
+        }
         std::cout << "\nPress Enter for quit";
         getchar();
     }
     return EXIT_SUCCESS;
 }
 
-void readFromFile(char fileName[])
+static void readFromFile(char fileName[])
 {
     std::string LINE;
     std::fstream file(fileName, std::ios::in);

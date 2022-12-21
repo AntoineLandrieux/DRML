@@ -9,7 +9,7 @@
 void consoleInit()
 {
     std::string LINE;
-    printf("DRML Snapshot 22w15a 32Bits\nType \"exit;\" for quit\n");
+    printf("DRML Snapshot 22w2112a 32Bits\nType \"exit;\" for quit\n");
     while (1)
     {
         printf("\n>>> ");
