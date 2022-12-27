@@ -569,7 +569,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                 else if (TOKENS_LINE[i]==':' && final==0)
                 {
                     final=1;
-                    LAST_TOKEN += i;
+                    LAST_TOKEN = i;
                     break;
                 }
                 else
@@ -635,26 +635,24 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             }
             else if (TOKENS_LINE[i]==':')
             {
-                LAST_TOKEN += i;
-                if (PROCESS_NUMBER <= 0 || PROCESS_ACTION[PROCESS_NUMBER] == 2)
+                LAST_TOKEN = i++;
+                if (SUBPROCESS_NUMBER == 0)
                 {
-                    ErrCode("Incorrect Structure", "\'if\' missing", LINE_COUNT);
-                    return EXIT_FAILURE;
+                    if (PROCESS_NUMBER <= 0 || PROCESS_ACTION[PROCESS_NUMBER] == 2)
+                    {
+                        ErrCode("Incorrect Structure", "\'if\' missing", LINE_COUNT);
+                        return EXIT_FAILURE;
+                    }
+                    if (PROCESS_ACTION[PROCESS_NUMBER] == 0)
+                    {
+                        PROCESS_ACTION[PROCESS_NUMBER] = 1;
+                    }
+                    else if (PROCESS_ACTION[PROCESS_NUMBER] == 1)
+                    {
+                        PROCESS_ACTION[PROCESS_NUMBER] = 0;
+                    }
+                    break;
                 }
-                if (PROCESS_ACTION[PROCESS_NUMBER] == 0)
-                {
-                    PROCESS_ACTION[PROCESS_NUMBER] = 1;
-                }
-                else if (PROCESS_ACTION[PROCESS_NUMBER] == 1)
-                {
-                    PROCESS_ACTION[PROCESS_NUMBER] = 0;
-                }
-                else
-                {
-                    ErrCode("Incorrect Structure", "\':\' missing", LINE_COUNT);
-                    return EXIT_FAILURE;
-                }
-                break;
             }
             else
             {
@@ -964,16 +962,16 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             }
         }
     }
-    else if ((TOKENS_LINE[LAST_TOKEN] == 'e') && (TOKENS_LINE[LAST_TOKEN+1] == 'x') && (TOKENS_LINE[2] == 'i') && (TOKENS_LINE[LAST_TOKEN+3] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] == 1));
-    else if ((TOKENS_LINE[LAST_TOKEN] == 'o') && (TOKENS_LINE[LAST_TOKEN+1] == 'u') && (TOKENS_LINE[2] == 't') && (PROCESS_ACTION[PROCESS_NUMBER] == 1));
-    else if ((TOKENS_LINE[LAST_TOKEN] == 'i') && (TOKENS_LINE[LAST_TOKEN+1] == 'n') && (PROCESS_ACTION[PROCESS_NUMBER] == 1));
-    else if ((TOKENS_LINE[LAST_TOKEN] == '$' && PROCESS_ACTION[PROCESS_NUMBER] == 1) || (TOKENS_LINE[0] == '&' && PROCESS_ACTION[PROCESS_NUMBER] == 1));
-    else if (TOKENS_LINE[LAST_TOKEN] == ' ' || TOKENS_LINE[LAST_TOKEN] == '\t' || TOKENS_LINE[LAST_TOKEN] == '~');
     else if ((TOKENS_LINE[LAST_TOKEN] == 'i') && (TOKENS_LINE[LAST_TOKEN+1] == 'f') && (PROCESS_ACTION[PROCESS_NUMBER] == 1))
     {
         SUBPROCESS_NUMBER++;
     }
-    else if (TOKENS_LINE[LAST_TOKEN] != '\0' || TOKENS_LINE[LAST_TOKEN] != '\r' || TOKENS_LINE[LAST_TOKEN] != '\n')
+    else if (PROCESS_ACTION[PROCESS_NUMBER] == 1)
+    {
+        LAST_TOKEN = 0;
+        return EXIT_SUCCESS;
+    }
+    else if (TOKENS_LINE[LAST_TOKEN] == '\0' || TOKENS_LINE[LAST_TOKEN] == '\r' || TOKENS_LINE[LAST_TOKEN] == '\n')
     {
         LAST_TOKEN = 0;
         return EXIT_SUCCESS;
@@ -981,7 +979,6 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
     else
     {
         LAST_TOKEN = 0;
-        ErrCode("NameError", "The term is not recognized", LINE_COUNT);
         return EXIT_FAILURE;
     }
     Execute(TOKENS_LINE, BUFFER, LINE_COUNT, LAST_TOKEN+1);
