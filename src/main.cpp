@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        for (int i=0; i<argc; i++)
+        for (int i=1; i<argc; i++)
         {
             readFromFile(argv[i]);
         }
@@ -74,12 +74,5 @@ int Lexing(std::string LINE)
             TOKENS_LINE[a++] = LINE[i];
         }
     }
-    if (Execute(TOKENS_LINE, BUFFER, LINE_COUNT, 0) == EXIT_FAILURE)
-    {
-        return EXIT_FAILURE;
-    }
-    else
-    {
-        return EXIT_SUCCESS;
-    }
+    return Execute(TOKENS_LINE, BUFFER, LINE_COUNT, 0);
 }

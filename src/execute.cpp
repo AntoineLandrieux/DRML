@@ -1,10 +1,9 @@
 #include <iostream>
 #include <string>
-#include <errcode.hpp>
-#include <execute.hpp>
-#define MAX_BUFFER 999
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
+
+#define MAX_BUFFER 999
 
 std::string NAMESPACE = "\0";
 std::string VARIABLE_NAME_INT[MAX_BUFFER];
@@ -16,6 +15,9 @@ int SUBPROCESS_NUMBER = 0;
 int VARIABLE_NUMBER_INT = 0;
 int VARIABLE_NUMBER_STRING = 1;
 int VARIABLE_VALUE_INT[MAX_BUFFER];
+
+#include <errcode.hpp>
+#include <execute.hpp>
 
 int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
 {
@@ -45,7 +47,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                 if ((TOKENS_LINE[i] == ' ') || (TOKENS_LINE[i] == '\t') || (TOKENS_LINE[i] == '\0'))
                 {
                     ErrCode("Incorrect Structure", "\'=\' missing", LINE_COUNT);
-                    return EXIT_FAILURE;
+                    return PROCESS_NUMBER;
                 }
                 TMP[LINE_COUNT] += TOKENS_LINE[i];
             }
@@ -56,7 +58,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                     if (TMP[LINE_COUNT] == VARIABLE_NAME_STRING[e])
                     {
                         ErrCode("Incorrect argument", "Variable equ 1", LINE_COUNT);
-                        return EXIT_FAILURE;
+                        return PROCESS_NUMBER;
                     }
                 }
                 for (int e = 0; e < VARIABLE_NUMBER_INT+1; e++)
@@ -64,7 +66,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                     if (TMP[LINE_COUNT] == VARIABLE_NAME_INT[e])
                     {
                         ErrCode("Incorrect argument", "Variable equ 1", LINE_COUNT);
-                        return EXIT_FAILURE;
+                        return PROCESS_NUMBER;
                     }
                 }
                 i++;
@@ -88,7 +90,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                         if ((TOKENS_LINE[i] == '\0') || (TOKENS_LINE[i] == '\r'))
                         {
                             ErrCode("Incorrect Structure", "\'\"\' missing", LINE_COUNT);
-                            return EXIT_FAILURE;
+                            return PROCESS_NUMBER;
                         }
                         if (str && TOKENS_LINE[i]=='\"')
                         {
@@ -100,7 +102,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                             else
                             {
                                 ErrCode("Incorrect Structure", "\';\' missing", LINE_COUNT);
-                                return EXIT_FAILURE;
+                                return PROCESS_NUMBER;
                             }
                         }
                         if (str)
@@ -125,7 +127,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                                 }
                                 else
                                 {
-                                    return EXIT_FAILURE;
+                                    return PROCESS_NUMBER;
                                     ErrCode("Incorrect Structure", "\'\\type\' incorrect value", LINE_COUNT);
                                 }
                                 i++;
@@ -175,7 +177,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                 if ((TOKENS_LINE[x] == ' ') || (TOKENS_LINE[x] == '\t') || (TOKENS_LINE[x] == '\0'))
                 {
                     ErrCode("Incorrect Structure", "\'=\' missing", LINE_COUNT);
-                    return EXIT_FAILURE;
+                    return PROCESS_NUMBER;
                 }
                 VAR[LINE_COUNT] += TOKENS_LINE[x];
             }
@@ -198,7 +200,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                 if ((TOKENS_LINE[x] == '\0') || (TOKENS_LINE[x] == '\r'))
                 {
                     ErrCode("Incorrect Structure", "\';\' missing", LINE_COUNT);
-                    return EXIT_FAILURE;
+                    return PROCESS_NUMBER;
                 }
                 if (str && TOKENS_LINE[x]=='\"')
                 {
@@ -209,7 +211,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                     else
                     {
                         ErrCode("Incorrect Structure", "\';\' missing", LINE_COUNT);
-                        return EXIT_FAILURE;
+                        return PROCESS_NUMBER;
                     }
                 }
                 if (str == 1 && TOKENS_LINE[x] == '\\')
@@ -232,7 +234,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                     }
                     else
                     {
-                        return EXIT_FAILURE;
+                        return PROCESS_NUMBER;
                         ErrCode("Incorrect Structure", "\'\\type\' incorrect value", LINE_COUNT);
                     }
                     x++;
@@ -262,7 +264,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                     else
                     {
                         ErrCode("Incorrect Structure", "Impossible action", LINE_COUNT);
-                        return EXIT_FAILURE;
+                        return PROCESS_NUMBER;
                     }
                 }
                 else
@@ -285,43 +287,46 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
         if (!VALIDATE)
         {
             ErrCode("Incorrect Structure", " ", LINE_COUNT);
-            return EXIT_FAILURE;
+            return PROCESS_NUMBER;
         }
     }
     else if (TOKENS_LINE[LAST_TOKEN] == 'i' && TOKENS_LINE[LAST_TOKEN+1] == 'f' && PROCESS_ACTION[PROCESS_NUMBER] != 1)
     {
-        int i=LAST_TOKEN+4;
+        int i=LAST_TOKEN+3;
+        final = 0;
+        VAR[1] = "";
         for (i; i<BUFFER; i++)
         {
-            if (TOKENS_LINE[LAST_TOKEN+3] == '$')
+            if (TOKENS_LINE[i] == '$')
             {
-                if ((TOKENS_LINE[i] == '\t') || (TOKENS_LINE[i] == '\0') || (TOKENS_LINE[i] == ';'))
+                final = 1;
+            }
+            else if (final == 1)
+            {
+                if (TOKENS_LINE[i] == '\0')
                 {
-                    ErrCode("Incorrect Structure", "value missing", LINE_COUNT);
-                    return EXIT_FAILURE;
+                    ErrCode("Incorrect Structure", "Variable missing", LINE_COUNT);
+                    return PROCESS_NUMBER;
                 }
-                if (TOKENS_LINE[i] == ' ')
+                if (TOKENS_LINE[i] == ' ' || TOKENS_LINE[i] == '\t')
                 {
+                    i++;
+                    final=0;
                     break;
                 }
-                VAR[LINE_COUNT] += TOKENS_LINE[i];
-            }
-            else
-            {
-                ErrCode("Incorrect Structure", "Variable value missing", LINE_COUNT);
-                return EXIT_FAILURE;
+                VAR[1] += TOKENS_LINE[i];                
             }
         }
         int v=0;
         for (v; v<MAX_BUFFER; v++)
         {
-            if (VARIABLE_NAME_INT[v] == VAR[LINE_COUNT])
+            if (VARIABLE_NAME_INT[v] == VAR[1])
             {
                 str = 0;
                 VALIDATE = 1;
                 break;
             }
-            else if (VARIABLE_NAME_STRING[v] == VAR[LINE_COUNT])
+            else if (VARIABLE_NAME_STRING[v] == VAR[1])
             {
                 str = 1;
                 VALIDATE = 1;
@@ -330,96 +335,96 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
         }
         if (!VALIDATE)
         {
-            ErrCode("Incorrect Structure", "Variable missing", LINE_COUNT);
-            return EXIT_FAILURE;
+            ErrCode("Incorrect Structure", "Variable not found", LINE_COUNT);
+            return PROCESS_NUMBER;
         }
         VALIDATE = 0;
         if (str)
         {
-            TMP[LINE_COUNT] = VARIABLE_VALUE_STRING[v];
+            TMP[1] = VARIABLE_VALUE_STRING[v];
         }
         else
         {
-            TMP[LINE_COUNT] = VARIABLE_VALUE_INT[v];
+            TMP[1] = VARIABLE_VALUE_INT[v];
         }
-        i++;
         for (i; i< BUFFER; i++)
         {
-            if ((TOKENS_LINE[i] == '\t') || (TOKENS_LINE[i] == '\0') || (TOKENS_LINE[i] == ';'))    
+            if ((TOKENS_LINE[i] == '<' && TOKENS_LINE[i+1] == '=') || (TOKENS_LINE[i] == '=' && TOKENS_LINE[i+1] == '<'))
             {
-                ErrCode("Incorrect Structure", "\';\' missing", LINE_COUNT);
-                return EXIT_FAILURE;
-            }
-            if (TOKENS_LINE[i] == ' ')
-            {
-                break;
-            }
-            if (TOKENS_LINE[i] == '<')
-            {
-                action = '-';
-                i++;
-            }
-            else if (TOKENS_LINE[i] == '>')
-            {
-                action = '+';
-                i++;
-            }
-            else if ((TOKENS_LINE[i] == '<' && TOKENS_LINE[i+1] == '=') || (TOKENS_LINE[i] == '=' && TOKENS_LINE[i+1] == '<'))
-            {
+                result=1;
                 action = '<';
+                break;
             }
             else if ((TOKENS_LINE[i] == '>' && TOKENS_LINE[i+1] == '=') || (TOKENS_LINE[i] == '=' && TOKENS_LINE[i+1] == '>'))
             {
+                result=1;
                 action = '>';
+                break;
             }
             else if ((TOKENS_LINE[i] == '!' && TOKENS_LINE[i+1] == '=') || (TOKENS_LINE[i] == '=' && TOKENS_LINE[i+1] == '!'))
             {
+                result=1;
                 action = '!';
+                break;
             }
             else if (TOKENS_LINE[i] == '=' && TOKENS_LINE[i+1] == '=')
             {
+                result=1;
                 action = '=';
+                break;
+            }
+            if ((TOKENS_LINE[i] != '\t') && (TOKENS_LINE[i] != ' ') && result == 0)    
+            {
+                ErrCode("Incorrect Structure", "Condition missing", LINE_COUNT);
+                return PROCESS_NUMBER;
             }
         }
         if (action == 'n')
         {
             ErrCode("Incorrect Structure", "Enter an valid action", LINE_COUNT);
-            return EXIT_FAILURE;
+            return PROCESS_NUMBER;
         }
-        i++;
-        if (TOKENS_LINE[i] != '$')
-        {
-            ErrCode("Incorrect Structure", "Variable value missing", LINE_COUNT);
-            return EXIT_FAILURE;
-        }
-        LINE_COUNT++;
-        i+=1;
+        i+=3;
         for (i; i<BUFFER; i++)
         {
-            if (TOKENS_LINE[i] != ' ')
+            if (TOKENS_LINE[i] == '$')
             {
-                if ((TOKENS_LINE[i] == '\t') || (TOKENS_LINE[i] == '\0'))
-                {
-                    ErrCode("Incorrect Structure", "Value missing", LINE_COUNT-1);
-                    return EXIT_FAILURE;
-                }
-                TMP[LINE_COUNT] += TOKENS_LINE[i];
+                break;
+            }
+            else if (TOKENS_LINE[i] != '\t' && TOKENS_LINE[i] != ' ')
+            {
+                ErrCode("Incorrect Structure", "Variable missing", LINE_COUNT);
+                return PROCESS_NUMBER;
+            }
+        }
+        TMP[1] = "";
+        i++;
+        for (i; i<BUFFER; i++)
+        {
+            if (TOKENS_LINE[i] == ' ' || TOKENS_LINE[i] == '\t')
+            {
+                break;
             }
             else
             {
-                break;
+                if (TOKENS_LINE[i] == '\0')
+                {
+                    ErrCode("Incorrect Structure", "Variabless missing", LINE_COUNT);
+                    return PROCESS_NUMBER;
+                }
+                TMP[1] += TOKENS_LINE[i];                
             }
         }
         i+=2;
         int bnb=0;
         for (bnb; bnb < MAX_BUFFER; bnb++)
         {
-            if (TMP[LINE_COUNT] == VARIABLE_NAME_STRING[bnb])
+            if (TMP[1] == VARIABLE_NAME_STRING[bnb])
             {
                 VALIDATE = 1;
                 break;
             }
-            if (TMP[LINE_COUNT] == VARIABLE_NAME_INT[bnb])
+            if (TMP[1] == VARIABLE_NAME_INT[bnb])
             {
                 VALIDATE = 1;
                 break;
@@ -427,24 +432,24 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
         }
         if (VALIDATE == 0)
         {
-            ErrCode("Incorrect Structure", "Variable missing", LINE_COUNT-1);
-            return EXIT_FAILURE;
+            ErrCode("Incorrect Structure", "Variable missing", LINE_COUNT);
+            return PROCESS_NUMBER;
         }
         VALIDATE = 0;
         if (str)
         {
-            TMP[LINE_COUNT] = VARIABLE_VALUE_STRING[i];
+            TMP[1] = VARIABLE_VALUE_STRING[i];
             VALIDATE = 1;
         }
         else
         {
-            TMP[LINE_COUNT] = VARIABLE_VALUE_INT[i];
+            TMP[1] = VARIABLE_VALUE_INT[i];
             VALIDATE = 1;
         }
         if (!VALIDATE)
         {
             ErrCode("Incorrect Structure", " ", LINE_COUNT);
-            return EXIT_FAILURE;
+            return PROCESS_NUMBER;
         }
         VALIDATE = 0;
         if (action == '=')
@@ -498,7 +503,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             if (str)
             {
                 ErrCode("Incorrect Structure", "Can't compare str with \'<\'", LINE_COUNT);
-                return EXIT_FAILURE;
+                return PROCESS_NUMBER;
             }
         }
         if (action == '>')
@@ -514,75 +519,45 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             if (str)
             {
                 ErrCode("Incorrect Structure", "Can't compare str with \'>\'", LINE_COUNT);
-                return EXIT_FAILURE;
-            }
-        }
-        if (action == '+')
-        {
-            if (!str && VARIABLE_VALUE_INT[v] > VARIABLE_VALUE_INT[bnb])
-            {
-                result = 1;
-            }
-            else if (!str && VARIABLE_VALUE_INT[v] > VARIABLE_VALUE_INT[bnb])
-            {
-                result = 0;
-            }
-            if (str)
-            {
-                ErrCode("Incorrect Structure", "Can't compare str with \'<\'", LINE_COUNT);
-                return EXIT_FAILURE;
-            }
-        }
-        if (action == '-')
-        {
-            if (!str && VARIABLE_VALUE_INT[v] < VARIABLE_VALUE_INT[bnb])
-            {
-                result = 1;
-            }
-            else if (!str && VARIABLE_VALUE_INT[v] < VARIABLE_VALUE_INT[bnb])
-            {
-                result = 0;
-            }
-            if (str)
-            {
-                ErrCode("Incorrect Structure", "Can't compare str with \'<\'", LINE_COUNT);
-                return EXIT_FAILURE;
+                return PROCESS_NUMBER;
             }
         }
         i--;
-        LINE_COUNT--;
-        TMP[LINE_COUNT] = "";
-        if (TOKENS_LINE[i] == 'e' && TOKENS_LINE[i+1] == 'x' && TOKENS_LINE[i+2] == 'e' && TOKENS_LINE[i+3] == 'c')
-        {
-            i+=4;
-            PROCESS_NUMBER++;
-            if (result != 1)
+        TMP[2] = "";
+        for (i; i<BUFFER; i++) {
+            if (TOKENS_LINE[i] == 'e' && TOKENS_LINE[i+1] == 'x' && TOKENS_LINE[i+2] == 'e' && TOKENS_LINE[i+3] == 'c')
             {
-                PROCESS_ACTION[PROCESS_NUMBER] = 1;
+                i+=4;
+                PROCESS_NUMBER++;
+                if (result != 1)
+                {
+                    PROCESS_ACTION[PROCESS_NUMBER] = 1;
+                }
+                for (i; i<BUFFER; i++)
+                {
+                    if (TOKENS_LINE[i]=='\t' && TOKENS_LINE[i]==' ')
+                    {
+                        continue;
+                    }
+                    else if (TOKENS_LINE[i]==':' && final==0)
+                    {
+                        final=1;
+                        LAST_TOKEN = i;
+                        break;
+                    }
+                    else
+                    {
+                        ErrCode("Incorrect Structure", "\':\' missing", LINE_COUNT);
+                        return PROCESS_NUMBER;
+                    }
+                }
+                break;
             }
-            for (i; i<BUFFER; i++)
+            else if (TOKENS_LINE[i] != '\t' && TOKENS_LINE[i] != ' ')
             {
-                if (TOKENS_LINE[i]=='\t' || TOKENS_LINE[i]==' ')
-                {
-                    continue;
-                }
-                else if (TOKENS_LINE[i]==':' && final==0)
-                {
-                    final=1;
-                    LAST_TOKEN = i;
-                    break;
-                }
-                else
-                {
-                    ErrCode("Incorrect Structure", "\':\' missing", LINE_COUNT);
-                    return EXIT_FAILURE;
-                }
+                ErrCode("Incorrect Structure", "\'exec\' missing", LINE_COUNT);
+                return PROCESS_NUMBER;
             }
-        }
-        else
-        {
-            ErrCode("Incorrect Structure", "\'exec\' missing", LINE_COUNT);
-            return EXIT_FAILURE;
         }
     }
     else if ((TOKENS_LINE[LAST_TOKEN] == 'e') && (TOKENS_LINE[LAST_TOKEN+1] == 'n') && (TOKENS_LINE[LAST_TOKEN+2] == 'd'))
@@ -603,7 +578,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                     if (PROCESS_NUMBER == 0)
                     {
                         ErrCode("PROCESS", "Process equ 0", LINE_COUNT);
-                        return EXIT_FAILURE;
+                        return PROCESS_NUMBER;
                     }
                     if (PROCESS_ACTION[PROCESS_NUMBER] == 2)
                     {
@@ -621,7 +596,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             else
             {
                 ErrCode("Incorrect Structure", "\';\' missing", LINE_COUNT);
-                return EXIT_FAILURE;
+                return PROCESS_NUMBER;
             }
         }
     }
@@ -641,7 +616,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                     if (PROCESS_NUMBER <= 0 || PROCESS_ACTION[PROCESS_NUMBER] == 2)
                     {
                         ErrCode("Incorrect Structure", "\'if\' missing", LINE_COUNT);
-                        return EXIT_FAILURE;
+                        return PROCESS_NUMBER;
                     }
                     if (PROCESS_ACTION[PROCESS_NUMBER] == 0)
                     {
@@ -657,7 +632,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             else
             {
                 ErrCode("Incorrect Structure", "\':\' missing", LINE_COUNT);
-                return EXIT_FAILURE;
+                return PROCESS_NUMBER;
             }
         }
     }
@@ -683,7 +658,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             else
             {
                 ErrCode("Incorrect Structure", "\'\"\' or variable missing", LINE_COUNT);
-                return EXIT_FAILURE;
+                return PROCESS_NUMBER;
             }
         }
         i++;
@@ -692,7 +667,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             if (TOKENS_LINE[i] == '\0' || TOKENS_LINE[i] == '\r')
             {
                 ErrCode("Incorrect Structure", "\'\"\' missing", LINE_COUNT);
-                return EXIT_FAILURE;
+                return PROCESS_NUMBER;
             }
             if (TOKENS_LINE[i] == '\"' && isVar == 0)
             {
@@ -728,7 +703,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                 }
                 else
                 {
-                    return EXIT_FAILURE;
+                    return PROCESS_NUMBER;
                     ErrCode("Incorrect Structure", "\'\\type\' incorrect value", LINE_COUNT);
                 }
                 i++;
@@ -753,7 +728,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             else
             {
                 ErrCode("Incorrect Structure", "\';\' missing", LINE_COUNT);
-                return EXIT_FAILURE;
+                return PROCESS_NUMBER;
             }
         }
         if (VALIDATE == 1)
@@ -786,7 +761,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
                 }
                 if (VALIDATE == 0) {
                     ErrCode("Incorrect Structure", "Variable missing", LINE_COUNT);
-                    return EXIT_FAILURE;
+                    return PROCESS_NUMBER;
                 }
                 if (str == 1)
                 {
@@ -819,7 +794,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             else
             {
                 ErrCode("Incorrect Structure", "variable missing", LINE_COUNT);
-                return EXIT_FAILURE;
+                return PROCESS_NUMBER;
             }
         }
         i++;
@@ -828,7 +803,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             if (TOKENS_LINE[i] == '\0' || TOKENS_LINE[i] == '\r')
             {
                 ErrCode("Incorrect Structure", "; missing", LINE_COUNT);
-                return EXIT_FAILURE;
+                return PROCESS_NUMBER;
             }
             else if (TOKENS_LINE[i] == ';' || TOKENS_LINE[i] == ' ')
             {
@@ -854,7 +829,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             else
             {
                 ErrCode("Incorrect Structure", "\';\' missing", LINE_COUNT);
-                return EXIT_FAILURE;
+                return PROCESS_NUMBER;
             }
         }
         if (VALIDATE == 1)
@@ -874,7 +849,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             if (VALIDATE == 0)
             {
                 ErrCode("Incorrect Structure", "Variable missing\nOnly <string> accept", LINE_COUNT);
-                return EXIT_FAILURE;
+                return PROCESS_NUMBER;
             }
             if (str == 1)
             {
@@ -883,7 +858,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             else
             {
                 ErrCode("Incorrect Structure", "Can\'t convert <int> to <string>", LINE_COUNT);
-                return EXIT_FAILURE;
+                return PROCESS_NUMBER;
             }
         }
     }
@@ -893,7 +868,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
         if (NAMESPACE != "\0")
         {
             ErrCode("Incorrect Structure", "Can\'t place tow namespace", LINE_COUNT);
-            return EXIT_FAILURE;
+            return PROCESS_NUMBER;
         }
         int i = LAST_TOKEN+9;
         for (i; i<BUFFER; i++)
@@ -914,7 +889,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             else if (TOKENS_LINE[i]=='~' || TOKENS_LINE[i]=='\0' || TOKENS_LINE[i]=='\r')
             {
                 ErrCode("Incorrect Structure", "\':\' missing", LINE_COUNT);
-                return EXIT_FAILURE;
+                return PROCESS_NUMBER;
             }
             else
             {
@@ -936,7 +911,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             else
             {
                 ErrCode("Incorrect Structure", "\':\' missing", LINE_COUNT);
-                return EXIT_FAILURE;
+                return PROCESS_NUMBER;
             }
         }
         PROCESS_NUMBER++;
@@ -958,7 +933,7 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
             else
             {
                 ErrCode("Incorrect Structure", "\';\' missing", LINE_COUNT);
-                return EXIT_FAILURE;
+                return PROCESS_NUMBER;
             }
         }
     }
@@ -969,18 +944,19 @@ int Execute(char *TOKENS_LINE, int BUFFER, int LINE_COUNT, int LAST)
     else if (PROCESS_ACTION[PROCESS_NUMBER] == 1)
     {
         LAST_TOKEN = 0;
-        return EXIT_SUCCESS;
+        return PROCESS_NUMBER;
     }
     else if (TOKENS_LINE[LAST_TOKEN] == '\0' || TOKENS_LINE[LAST_TOKEN] == '\r' || TOKENS_LINE[LAST_TOKEN] == '\n')
     {
         LAST_TOKEN = 0;
-        return EXIT_SUCCESS;
+        return PROCESS_NUMBER;
     }
     else
     {
+        ErrCode("NameError", "Command not found", LINE_COUNT);
         LAST_TOKEN = 0;
-        return EXIT_FAILURE;
+        return PROCESS_NUMBER;
     }
     Execute(TOKENS_LINE, BUFFER, LINE_COUNT, LAST_TOKEN+1);
-    return EXIT_SUCCESS;
+    return PROCESS_NUMBER;
 }
